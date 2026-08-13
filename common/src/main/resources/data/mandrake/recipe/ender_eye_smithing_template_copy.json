@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "ETE",
+    "ECE",
+    "EEE"
+  ],
+  "key": {
+    "E": {
+      "item": "minecraft:ender_pearl"
+    },
+    "T": {
+      "item": "mandrake:ender_eye_smithing_template"
+    },
+    "C": {
+      "item": "minecraft:crying_obsidian"
+    }
+  },
+  "result": {
+    "id": "mandrake:ender_eye_smithing_template",
+    "count": 2
+  }
+}

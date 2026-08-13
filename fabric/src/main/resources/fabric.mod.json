@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "id": "mandrake",
+  "version": "${version}",
+  "name": "Mandrake",
+  "description": "A mod that makes Minecraft harder to beat!",
+  "authors": [
+    "xbodwf"
+  ],
+  "contact": {
+    "homepage": "https://github.com/xbodwf/mandrake",
+    "sources": "https://github.com/xbodwf/mandrake"
+  },
+  "license": "GPL-3.0",
+  "icon": "icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "at.mandrake.MandrakeFabric"
+    ],
+    "client": [
+      "at.mandrake.MandrakeFabricClient"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.16.0",
+    "fabric": "*",
+    "fabric-language-kotlin": ">=1.12.3",
+    "minecraft": ">=1.21.1",
+    "java": ">=21"
+  }
+}

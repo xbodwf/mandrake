@@ -1,0 +1,18 @@
+{
+  "display": {
+    "icon": { "id": "mandrake:bedrock_breaker" },
+    "title": { "translate": "advancement.mandrake.enter_core.title" },
+    "description": { "translate": "advancement.mandrake.enter_core.description" },
+    "background": "minecraft:textures/gui/advancements/backgrounds/adventure.png",
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "entered_earth_core": {
+      "trigger": "minecraft:changed_dimension",
+      "conditions": { "to": "mandrake:earth_core" }
+    }
+  }
+}

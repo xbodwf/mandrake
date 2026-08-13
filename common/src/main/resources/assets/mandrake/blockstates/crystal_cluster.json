@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "mandrake:block/crystal_cluster"
+    }
+  }
+}

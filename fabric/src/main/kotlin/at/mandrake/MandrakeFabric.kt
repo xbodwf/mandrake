@@ -19,17 +19,17 @@ class MandrakeFabric : ModInitializer {
         }
 
         LootTableEvents.MODIFY.register { key, tableBuilder, source, _ ->
-            if (source.isBuiltin && key.location() == ResourceLocation.withDefaultNamespace("chests/trial_chambers/reward_ominous")) {
+            if (source.isBuiltin && key.location() == ResourceLocation.withDefaultNamespace("chests/ancient_city")) {
                 val pool = LootPool.lootPool()
                     .setRolls(ConstantValue.exactly(1.0f))
                     .add(LootItem.lootTableItem(Mandrake.ENDER_EYE_SMITHING_TEMPLATE))
-                    .`when`(LootItemRandomChanceCondition.randomChance(0.1f))
+                    .`when`(LootItemRandomChanceCondition.randomChance(0.25f))
                 tableBuilder.withPool(pool)
-            } else if (source.isBuiltin && key.location() == ResourceLocation.withDefaultNamespace("chests/trial_chambers/reward")) {
+            } else if (source.isBuiltin && key.location() == ResourceLocation.withDefaultNamespace("chests/ancient_city_ice_box")) {
                 val pool = LootPool.lootPool()
                     .setRolls(ConstantValue.exactly(1.0f))
                     .add(LootItem.lootTableItem(Mandrake.ENDER_EYE_SMITHING_TEMPLATE))
-                    .`when`(LootItemRandomChanceCondition.randomChance(0.025f))
+                    .`when`(LootItemRandomChanceCondition.randomChance(0.25f))
                 tableBuilder.withPool(pool)
             }
         }

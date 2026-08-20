@@ -58,17 +58,17 @@ class MandrakeNeoForge(modBus: IEventBus) {
     }
 
     private fun onLootTableLoad(event: LootTableLoadEvent) {
-        if (event.name == ResourceLocation.withDefaultNamespace("chests/trial_chambers/reward_ominous")) {
+        if (event.name == ResourceLocation.withDefaultNamespace("chests/ancient_city")) {
             val pool = LootPool.lootPool()
                 .setRolls(ConstantValue.exactly(1.0f))
                 .add(LootItem.lootTableItem(Mandrake.ENDER_EYE_SMITHING_TEMPLATE))
-                .`when`(LootItemRandomChanceCondition.randomChance(0.1f))
+                .`when`(LootItemRandomChanceCondition.randomChance(0.25f))
             event.table.addPool(pool.build())
-        } else if (event.name == ResourceLocation.withDefaultNamespace("chests/trial_chambers/reward")) {
+        } else if (event.name == ResourceLocation.withDefaultNamespace("chests/ancient_city_ice_box")) {
             val pool = LootPool.lootPool()
                 .setRolls(ConstantValue.exactly(1.0f))
                 .add(LootItem.lootTableItem(Mandrake.ENDER_EYE_SMITHING_TEMPLATE))
-                .`when`(LootItemRandomChanceCondition.randomChance(0.025f))
+                .`when`(LootItemRandomChanceCondition.randomChance(0.25f))
             event.table.addPool(pool.build())
         }
     }

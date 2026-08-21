@@ -1,24 +1,30 @@
 {
   "schemaVersion": 1,
-  "id": "mandrake",
+  "id": "xbce",
   "version": "${version}",
-  "name": "Mandrake",
-  "description": "A mod that makes Minecraft harder to beat!",
+  "name": "xb's Creature Enhancement",
+  "description": "All's fair in war - mobs disguise themselves as friendly creatures!",
   "authors": [
     "xbodwf"
   ],
   "contact": {
-    "homepage": "https://github.com/xbodwf/mandrake",
-    "sources": "https://github.com/xbodwf/mandrake"
+    "homepage": "https://github.com/xbodwf/xbce",
+    "sources": "https://github.com/xbodwf/xbce"
   },
   "license": "GPL-3.0",
   "icon": "icon.png",
   "environment": "*",
   "entrypoints": {
     "main": [
-      "at.mandrake.MandrakeFabric"
+      "at.xbce.XBCEFabric"
+    ],
+    "client": [
+      "at.xbce.client.XBCEFabricClient"
     ]
   },
+  "mixins": [
+    "xbce.fabric.mixins.json"
+  ],
   "depends": {
     "fabricloader": ">=0.16.0",
     "fabric": "*",

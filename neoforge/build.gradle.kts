@@ -34,7 +34,7 @@ sourceSets {
         resources {
             srcDir(project(":common").sourceSets["main"].resources)
             exclude("architectury.common.json")
-            exclude("mandrake.accesswidener")
+            exclude("xbce.accesswidener")
         }
     }
 }

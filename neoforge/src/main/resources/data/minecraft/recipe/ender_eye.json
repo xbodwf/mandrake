@@ -1,18 +1,21 @@
 {
-  "neoforge:conditions": [
+  "type": "minecraft:crafting_shapeless",
+  "group": "ender_eye",
+  "ingredients": [
     {
-      "type": "neoforge:mod_loaded",
-      "modid": "non_existent_mod_do_not_install"
+      "item": "minecraft:ender_pearl"
+    },
+    {
+      "item": "minecraft:blaze_powder"
     }
   ],
-  "type": "minecraft:crafting_shapeless",
-  "category": "misc",
-  "ingredients": [
-    { "item": "minecraft:ender_pearl" },
-    { "item": "minecraft:blaze_powder" }
-  ],
   "result": {
-    "id": "minecraft:ender_eye",
+    "item": "minecraft:ender_eye",
     "count": 1
-  }
+  },
+  "conditions": [
+    {
+      "type": "neoforge:false"
+    }
+  ]
 }

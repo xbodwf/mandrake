@@ -20,4 +20,4 @@ include("common")
 include("fabric")
 include("neoforge")
 
-rootProject.name = "mandrake"
+rootProject.name = "xbce"

@@ -1,0 +1,15 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "at.xbce.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "SnowGolemMixin",
+    "IronGolemMixin",
+    "VillagerMixin",
+    "IronGolemSpawnMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

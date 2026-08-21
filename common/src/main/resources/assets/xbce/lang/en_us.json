@@ -1,0 +1,15 @@
+{
+  "item.xbce.ender_eye_smithing_template.applies_to": "Smithing Table",
+  "item.xbce.ender_eye_smithing_template.ingredients": "Netherite Upgrade",
+  "item.xbce.ender_eye_smithing_template.upgrade_description": "Upgrade Tool",
+  "item.xbce.ender_eye_smithing_template.base_slot_description": "Add Netherite Ingot",
+  "item.xbce.ender_eye_smithing_template.additions_slot_description": "Add Netherite Upgrade",
+  "item.xbce.ender_eye_smithing_template": "Ender Eye Smithing Template",
+  "entity.xbce.fake_snow_golem": "Snow Golem",
+  "entity.xbce.fake_villager": "Villager",
+  "entity.xbce.fake_iron_golem": "Iron Golem",
+  "xbce.death.attacker": "%s was slain by %s",
+  "xbce.reveal.fake_snow_golem": "%s reveals itself as a Creeper!",
+  "xbce.reveal.fake_villager": "%s reveals itself as a Vindicator!",
+  "xbce.reveal.fake_iron_golem": "%s reveals itself as a Warden!"
+}

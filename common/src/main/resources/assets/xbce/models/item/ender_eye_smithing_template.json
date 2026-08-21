@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "mandrake:item/ender_eye_smithing_template"
+    "layer0": "xbce:item/ender_eye_smithing_template"
   }
 }

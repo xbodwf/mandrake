@@ -32,7 +32,7 @@ class FakeVillagerEntity(type: EntityType<out FakeVillagerEntity>, level: Level)
             .add(Attributes.MOVEMENT_SPEED, 0.35)
     }
 
-    /** 伏击模式：被预埋后，玩家或商队商人靠近时立刻现形。 */
+    /** 伏击模式：被预埋后，玩家靠近时立刻现形。 */
     fun primeAmbush() {
         ambushPrimed = true
     }
@@ -51,7 +51,7 @@ class FakeVillagerEntity(type: EntityType<out FakeVillagerEntity>, level: Level)
             val near = level().getEntitiesOfClass(
                 net.minecraft.world.entity.LivingEntity::class.java,
                 net.minecraft.world.phys.AABB.ofSize(position(), 16.0, 8.0, 16.0)
-            ) { it is Player || it is CaravanTraderEntity }
+            ) { it is Player }
                 .minByOrNull { it.distanceToSqr(this) }
             if (near != null) {
                 reveal(near)

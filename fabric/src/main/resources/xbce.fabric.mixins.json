@@ -14,8 +14,14 @@
     "BackstabMixin",
     "VillagerMixin",
     "IronGolemSpawnMixin",
-    "GameRulesAccessor",
-    "GameRulesIntegerValueAccessor"
+    "PhantomMixin",
+    "PhantomMoveControlMixin",
+    "MobSweepMixin",
+    "LivingEntityPhantomMixin",
+    "LivingEntityLayersAccessor"
+  ],
+  "client": [
+    "PhantomRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1

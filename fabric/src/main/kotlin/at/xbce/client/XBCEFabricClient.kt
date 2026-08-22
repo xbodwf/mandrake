@@ -1,7 +1,6 @@
 package at.xbce.client
 
 import at.xbce.XBCE
-import at.xbce.client.render.CaravanTraderRenderer
 import at.xbce.client.render.FakeIronGolemRenderer
 import at.xbce.client.render.FakeSnowGolemModelLayers
 import at.xbce.client.render.FakeSnowGolemRenderer
@@ -30,10 +29,6 @@ class XBCEFabricClient : ClientModInitializer {
 
         EntityRendererRegistry.register(XBCE.FAKE_IRON_GOLEM) { ctx ->
             FakeIronGolemRenderer(ctx)
-        }
-
-        EntityRendererRegistry.register(XBCE.CARAVAN_TRADER) { ctx ->
-            CaravanTraderRenderer(ctx)
         }
     }
 }

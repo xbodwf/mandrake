@@ -35,9 +35,5 @@ object XBCENeoForgeClient {
         event.registerEntityRenderer(XBCE.FAKE_IRON_GOLEM) { ctx ->
             FakeIronGolemRenderer(ctx)
         }
-
-        event.registerEntityRenderer(XBCE.CARAVAN_TRADER) { ctx ->
-            at.xbce.client.render.CaravanTraderRenderer(ctx)
-        }
     }
 }

@@ -1,6 +1,5 @@
 package at.xbce
 
-import at.xbce.entity.CaravanTraderEntity
 import at.xbce.entity.FakeIronGolemEntity
 import at.xbce.entity.FakeSnowGolemEntity
 import at.xbce.entity.FakeVillagerEntity
@@ -21,7 +20,6 @@ object XBCE {
     lateinit var FAKE_SNOW_GOLEM: EntityType<FakeSnowGolemEntity>
     lateinit var FAKE_VILLAGER: EntityType<FakeVillagerEntity>
     lateinit var FAKE_IRON_GOLEM: EntityType<FakeIronGolemEntity>
-    lateinit var CARAVAN_TRADER: EntityType<CaravanTraderEntity>
 
     lateinit var ENDER_EYE_SMITHING_TEMPLATE: Item
     lateinit var REVEAL_SPYGLASS: Item
@@ -54,15 +52,6 @@ object XBCE {
                 .sized(1.4f, 2.7f)
                 .clientTrackingRange(10)
                 .build("fake_iron_golem")
-        )
-
-        CARAVAN_TRADER = Registry.register(
-            BuiltInRegistries.ENTITY_TYPE,
-            id("caravan_trader"),
-            EntityType.Builder.of({ type, level -> CaravanTraderEntity(type, level) }, MobCategory.CREATURE)
-                .sized(0.6f, 1.95f)
-                .clientTrackingRange(8)
-                .build("caravan_trader")
         )
     }
 

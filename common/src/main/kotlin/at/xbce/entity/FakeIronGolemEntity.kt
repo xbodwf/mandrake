@@ -7,6 +7,7 @@ import net.minecraft.sounds.SoundEvents
 import net.minecraft.world.damagesource.DamageSource
 import net.minecraft.world.entity.EntityType
 import net.minecraft.world.entity.LivingEntity
+import net.minecraft.world.entity.MobSpawnType
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier
 import net.minecraft.world.entity.ai.attributes.Attributes
 import net.minecraft.world.entity.animal.IronGolem
@@ -52,14 +53,10 @@ class FakeIronGolemEntity(type: EntityType<out FakeIronGolemEntity>, level: Leve
 
     override fun registerGoals() {
         // 直接复用铁傀儡的完整 AI：巡逻、近战攻击(MeleeAttackGoal)、被攻击反击(HurtByTargetGoal)。
-        // 之前自定义 goal 漏掉了 MeleeAttackGoal，导致它锁定目标却永远不出手、也不像铁傀儡那样活动。
+        // 注意：不要给伪装状态加任何 targetSelector 目标（比如村民）——
+        // 目标 Goal 会和 MeleeAttackGoal 组合成主动索敌，导致假铁傀儡猎杀村民。
+        // “靠近村民融入村庄”由 tick() 里的 navigation.moveTo 实现，不涉及仇恨。
         super.registerGoals()
-
-        // 伪装期间额外靠近村民以融入村庄（不影响原版行为）。
-        targetSelector.addGoal(
-            4,
-            net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal(this, Villager::class.java, 10, true, false) { !isRevealed }
-        )
     }
 
     override fun tick() {
@@ -123,22 +120,26 @@ class FakeIronGolemEntity(type: EntityType<out FakeIronGolemEntity>, level: Leve
             warden.isCustomNameVisible = isCustomNameVisible
         }
 
+        // 关键①：按原版 TRIGGERED 生成流程初始化脑记忆（IS_EMERGING + DIG_COOLDOWN）。
+        // 新建监守者若缺少 DIG_COOLDOWN，updateActivity 会永远命中 DIG 活动
+        // （活动优先级 DIG > FIGHT，且 DIG 的条件恰是"无目标记忆"），导致它
+        // 既不索敌、不攻击、也不遁地——彻底僵住。
+        warden.finalizeSpawn(level, level.getCurrentDifficultyAt(blockPosition()), MobSpawnType.TRIGGERED, null)
+
         level.addFreshEntity(warden)
 
         // 铁傀儡壳已吸收 100 点伤害，因此揭露出的监守者只剩 400 血。
         warden.getAttribute(Attributes.MAX_HEALTH)?.baseValue = WARDEN_REVEAL_HEALTH.toDouble()
         warden.health = WARDEN_REVEAL_HEALTH
 
-        // 关键：给予足够高的愤怒值（> ANGRY 阈值 80）并锁定攻击目标，
-        // 否则监守者会遁地或对声响无动于衷（"打了个寂寞"）。
-        // 必须先 increaseAngerAt（写入 AngerManagement），再 setAttackTarget，
-        // 这样监守者的 Brain 下一 tick 不会因缺少愤怒目标而清除 ATTACK_TARGET。
+        // 关键②：先写入愤怒值（150 ≥ ANGRY 阈值 80），再锁定攻击目标；
+        // 否则钻出结束后 FIGHT 活动的 StopAttackingIfTargetInvalid 会因
+        // "不够愤怒"立即清除 ATTACK_TARGET（"打了个寂寞"）。
         if (triggeredBy != null) {
             warden.increaseAngerAt(triggeredBy, 150, true)
             warden.setAttackTarget(triggeredBy)
         }
 
-        level.playSound(null, x, y, z, SoundEvents.WARDEN_EMERGE, soundSource, 1.0f, 1.0f)
         level.sendParticles(ParticleTypes.SCULK_SOUL, x, y + 1.0, z, 20, 0.5, 0.8, 0.5, 0.05)
 
         discard()

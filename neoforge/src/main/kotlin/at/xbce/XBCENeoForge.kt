@@ -1,6 +1,5 @@
 package at.xbce
 
-import at.xbce.entity.CaravanTraderEntity
 import at.xbce.entity.FakeIronGolemEntity
 import at.xbce.entity.FakeSnowGolemEntity
 import at.xbce.entity.FakeVillagerEntity
@@ -75,16 +74,7 @@ class XBCENeoForge(modBus: IEventBus) {
         }
     )
 
-    private val caravanTrader = entities.register("caravan_trader",
-        Supplier { EntityType.Builder.of({ type, level -> CaravanTraderEntity(type, level) }, MobCategory.CREATURE)
-            .sized(0.6f, 1.95f)
-            .clientTrackingRange(8)
-            .build("caravan_trader")
-        }
-    )
-
     init {
-        at.xbce.XBCEGameRules.register()
         items.register(modBus)
         entities.register(modBus)
 
@@ -98,7 +88,6 @@ class XBCENeoForge(modBus: IEventBus) {
                     XBCE.FAKE_SNOW_GOLEM = fakeSnowGolem.get()
                     XBCE.FAKE_VILLAGER = fakeVillager.get()
                     XBCE.FAKE_IRON_GOLEM = fakeIronGolem.get()
-                    XBCE.CARAVAN_TRADER = caravanTrader.get()
                 }
             }
         }
@@ -110,11 +99,6 @@ class XBCENeoForge(modBus: IEventBus) {
         NeoForge.EVENT_BUS.addListener(this::onLootTableLoad)
         NeoForge.EVENT_BUS.addListener { event: net.neoforged.neoforge.event.entity.living.LivingDeathEvent ->
             at.xbce.XBCEAdvancements.onDeath(event.entity, event.source)
-        }
-        NeoForge.EVENT_BUS.addListener { event: net.neoforged.neoforge.event.tick.LevelTickEvent.Post ->
-            if (event.level is net.minecraft.server.level.ServerLevel) {
-                at.xbce.XBCESpawns.tick(event.level as net.minecraft.server.level.ServerLevel)
-            }
         }
     }
 
@@ -129,7 +113,6 @@ class XBCENeoForge(modBus: IEventBus) {
         event.put(XBCE.FAKE_SNOW_GOLEM, FakeSnowGolemEntity.createAttributes().build())
         event.put(XBCE.FAKE_VILLAGER, FakeVillagerEntity.createAttributes().build())
         event.put(XBCE.FAKE_IRON_GOLEM, FakeIronGolemEntity.createAttributes().build())
-        event.put(XBCE.CARAVAN_TRADER, CaravanTraderEntity.createAttributes().build())
     }
 
     private fun onLootTableLoad(event: LootTableLoadEvent) {

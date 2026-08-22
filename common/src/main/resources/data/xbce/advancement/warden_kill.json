@@ -1,0 +1,22 @@
+{
+  "parent": "xbce:shear_fake",
+  "display": {
+    "icon": {
+      "id": "minecraft:echo_shard"
+    },
+    "title": {
+      "translate": "advancements.xbce.warden_kill.title"
+    },
+    "description": {
+      "translate": "advancements.xbce.warden_kill.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "killed_by_warden": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

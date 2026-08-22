@@ -1,0 +1,22 @@
+{
+  "parent": "xbce:root",
+  "display": {
+    "icon": {
+      "id": "minecraft:shears"
+    },
+    "title": {
+      "translate": "advancements.xbce.shear_fake.title"
+    },
+    "description": {
+      "translate": "advancements.xbce.shear_fake.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "sheared": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

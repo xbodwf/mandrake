@@ -24,11 +24,17 @@ import net.minecraft.world.level.Level
 class FakeVillagerEntity(type: EntityType<out FakeVillagerEntity>, level: Level) : Villager(type, level) {
 
     private var isRevealed = false
+    private var ambushPrimed = false
 
     companion object {
         fun createAttributes(): AttributeSupplier.Builder = Villager.createMobAttributes()
             .add(Attributes.MAX_HEALTH, 20.0)
             .add(Attributes.MOVEMENT_SPEED, 0.35)
+    }
+
+    /** 伏击模式：被预埋后，玩家或商队商人靠近时立刻现形。 */
+    fun primeAmbush() {
+        ambushPrimed = true
     }
 
     override fun registerGoals() {
@@ -37,6 +43,20 @@ class FakeVillagerEntity(type: EntityType<out FakeVillagerEntity>, level: Level)
         goalSelector.addGoal(2, WaterAvoidingRandomStrollGoal(this, 0.4))
         goalSelector.addGoal(3, LookAtPlayerGoal(this, Player::class.java, 8.0f))
         goalSelector.addGoal(4, RandomLookAroundGoal(this))
+    }
+
+    override fun aiStep() {
+        super.aiStep()
+        if (!level().isClientSide && ambushPrimed && !isRevealed) {
+            val near = level().getEntitiesOfClass(
+                net.minecraft.world.entity.LivingEntity::class.java,
+                net.minecraft.world.phys.AABB.ofSize(position(), 16.0, 8.0, 16.0)
+            ) { it is Player || it is CaravanTraderEntity }
+                .minByOrNull { it.distanceToSqr(this) }
+            if (near != null) {
+                reveal(near)
+            }
+        }
     }
 
     override fun mobInteract(player: Player, hand: InteractionHand): InteractionResult {
@@ -55,14 +75,14 @@ class FakeVillagerEntity(type: EntityType<out FakeVillagerEntity>, level: Level)
         return super.hurt(source, amount)
     }
 
-    private fun reveal(triggeredBy: Player) {
+    private fun reveal(triggeredBy: net.minecraft.world.entity.LivingEntity) {
         isRevealed = true
 
         val vindicator = EntityType.VINDICATOR.create(level()) ?: return
         vindicator.moveTo(position())
         vindicator.yRot = yRot
         vindicator.xRot = xRot
-        vindicator.setTarget(triggeredBy)
+        vindicator.target = triggeredBy
         customName?.let { vindicator.customName = it }
 
         val axe = ItemStack(Items.IRON_AXE)
@@ -78,10 +98,12 @@ class FakeVillagerEntity(type: EntityType<out FakeVillagerEntity>, level: Level)
     override fun addAdditionalSaveData(nbt: CompoundTag) {
         super.addAdditionalSaveData(nbt)
         nbt.putBoolean("IsRevealed", isRevealed)
+        nbt.putBoolean("AmbushPrimed", ambushPrimed)
     }
 
     override fun readAdditionalSaveData(nbt: CompoundTag) {
         super.readAdditionalSaveData(nbt)
         isRevealed = nbt.getBoolean("IsRevealed")
+        ambushPrimed = nbt.getBoolean("AmbushPrimed")
     }
 }

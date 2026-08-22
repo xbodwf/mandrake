@@ -5,9 +5,17 @@
   "compatibilityLevel": "JAVA_21",
   "mixins": [
     "SnowGolemMixin",
-    "IronGolemMixin",
+    "SnowGolemSpawnMixin",
+    "CreeperConvertMixin",
+    "WardenConvertMixin",
+    "PlayerScopingMixin",
+    "TargetingConditionsMixin",
+    "ProjectileNoiseMixin",
+    "BackstabMixin",
     "VillagerMixin",
-    "IronGolemSpawnMixin"
+    "IronGolemSpawnMixin",
+    "GameRulesAccessor",
+    "GameRulesIntegerValueAccessor"
   ],
   "injectors": {
     "defaultRequire": 1

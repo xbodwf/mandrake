@@ -1,0 +1,29 @@
+{
+  "parent": "xbce:root",
+  "display": {
+    "icon": {
+      "id": "xbce:reveal_spyglass"
+    },
+    "title": {
+      "translate": "advancements.xbce.reveal_lens.title"
+    },
+    "description": {
+      "translate": "advancements.xbce.reveal_lens.description"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "have_lens": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": ["xbce:reveal_spyglass"]
+          }
+        ]
+      }
+    }
+  }
+}

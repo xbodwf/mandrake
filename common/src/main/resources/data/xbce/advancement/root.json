@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "id": "xbce:reveal_spyglass"
+    },
+    "title": {
+      "translate": "advancements.xbce.root.title"
+    },
+    "description": {
+      "translate": "advancements.xbce.root.description"
+    },
+    "frame": "task",
+    "show_toast": false,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "background": "minecraft:textures/block/deepslate_tiles.png",
+  "criteria": {
+    "root": {
+      "trigger": "minecraft:tick"
+    }
+  }
+}

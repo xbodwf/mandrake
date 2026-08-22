@@ -25,6 +25,8 @@ public abstract class IronGolemSpawnMixin {
         CallbackInfoReturnable<SpawnGroupData> cir
     ) {
         if (!((Object) this instanceof IronGolem)) return;
+        // 排除假铁傀儡自身，避免 finalizeSpawn 递归触发
+        if ((Object) this instanceof FakeIronGolemEntity) return;
         if (level.isClientSide()) return;
         if (level.getRandom().nextFloat() > 0.005f) return;
 

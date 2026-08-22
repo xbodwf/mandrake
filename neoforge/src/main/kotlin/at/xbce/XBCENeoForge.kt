@@ -1,8 +1,10 @@
 package at.xbce
 
+import at.xbce.entity.CaravanTraderEntity
 import at.xbce.entity.FakeIronGolemEntity
 import at.xbce.entity.FakeSnowGolemEntity
 import at.xbce.entity.FakeVillagerEntity
+import at.xbce.item.RevealSpyglassItem
 import net.minecraft.ChatFormatting
 import net.minecraft.core.registries.Registries
 import net.minecraft.network.chat.Component
@@ -10,6 +12,7 @@ import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.EntityType
 import net.minecraft.world.entity.MobCategory
 import net.minecraft.world.item.CreativeModeTabs
+import net.minecraft.world.item.Item
 import net.minecraft.world.item.SmithingTemplateItem
 import net.minecraft.world.level.storage.loot.LootPool
 import net.minecraft.world.level.storage.loot.entries.LootItem
@@ -32,6 +35,10 @@ class XBCENeoForge(modBus: IEventBus) {
     private val items = DeferredRegister.createItems(XBCE.MOD_ID)
     private val entities = DeferredRegister.create(Registries.ENTITY_TYPE, XBCE.MOD_ID)
 
+    private val revealSpyglass: DeferredItem<RevealSpyglassItem> = items.register("reveal_spyglass",
+        Supplier { RevealSpyglassItem(Item.Properties().stacksTo(1)) }
+    )
+
     private val enderEyeTemplate: DeferredItem<SmithingTemplateItem> = items.register("ender_eye_smithing_template",
         Supplier { SmithingTemplateItem(
             Component.translatable("item.xbce.ender_eye_smithing_template.applies_to"),
@@ -45,7 +52,7 @@ class XBCENeoForge(modBus: IEventBus) {
     )
 
     private val fakeSnowGolem = entities.register("fake_snow_golem",
-        Supplier { EntityType.Builder.of({ type, level -> FakeSnowGolemEntity(type, level) }, MobCategory.CREATURE)
+        Supplier { EntityType.Builder.of({ type, level -> FakeSnowGolemEntity(type, level) }, MobCategory.MONSTER)
             .sized(0.7f, 1.9f)
             .clientTrackingRange(8)
             .build("fake_snow_golem")
@@ -68,7 +75,16 @@ class XBCENeoForge(modBus: IEventBus) {
         }
     )
 
+    private val caravanTrader = entities.register("caravan_trader",
+        Supplier { EntityType.Builder.of({ type, level -> CaravanTraderEntity(type, level) }, MobCategory.CREATURE)
+            .sized(0.6f, 1.95f)
+            .clientTrackingRange(8)
+            .build("caravan_trader")
+        }
+    )
+
     init {
+        at.xbce.XBCEGameRules.register()
         items.register(modBus)
         entities.register(modBus)
 
@@ -76,11 +92,13 @@ class XBCENeoForge(modBus: IEventBus) {
             when (event.registryKey) {
                 Registries.ITEM -> {
                     XBCE.ENDER_EYE_SMITHING_TEMPLATE = enderEyeTemplate.get()
+                    XBCE.REVEAL_SPYGLASS = revealSpyglass.get()
                 }
                 Registries.ENTITY_TYPE -> {
                     XBCE.FAKE_SNOW_GOLEM = fakeSnowGolem.get()
                     XBCE.FAKE_VILLAGER = fakeVillager.get()
                     XBCE.FAKE_IRON_GOLEM = fakeIronGolem.get()
+                    XBCE.CARAVAN_TRADER = caravanTrader.get()
                 }
             }
         }
@@ -88,12 +106,22 @@ class XBCENeoForge(modBus: IEventBus) {
         modBus.addListener(this::onCreativeTabContents)
         modBus.addListener(this::onEntityAttributeCreation)
         modBus.addListener(at.xbce.client.XBCENeoForgeClient::onRegisterRenderers)
+        modBus.addListener(at.xbce.client.XBCENeoForgeClient::onRegisterLayerDefinitions)
         NeoForge.EVENT_BUS.addListener(this::onLootTableLoad)
+        NeoForge.EVENT_BUS.addListener { event: net.neoforged.neoforge.event.entity.living.LivingDeathEvent ->
+            at.xbce.XBCEAdvancements.onDeath(event.entity, event.source)
+        }
+        NeoForge.EVENT_BUS.addListener { event: net.neoforged.neoforge.event.tick.LevelTickEvent.Post ->
+            if (event.level is net.minecraft.server.level.ServerLevel) {
+                at.xbce.XBCESpawns.tick(event.level as net.minecraft.server.level.ServerLevel)
+            }
+        }
     }
 
     private fun onCreativeTabContents(event: BuildCreativeModeTabContentsEvent) {
         when (event.tabKey) {
             CreativeModeTabs.INGREDIENTS -> event.accept(enderEyeTemplate.get())
+            CreativeModeTabs.TOOLS_AND_UTILITIES -> event.accept(revealSpyglass.get())
         }
     }
 
@@ -101,6 +129,7 @@ class XBCENeoForge(modBus: IEventBus) {
         event.put(XBCE.FAKE_SNOW_GOLEM, FakeSnowGolemEntity.createAttributes().build())
         event.put(XBCE.FAKE_VILLAGER, FakeVillagerEntity.createAttributes().build())
         event.put(XBCE.FAKE_IRON_GOLEM, FakeIronGolemEntity.createAttributes().build())
+        event.put(XBCE.CARAVAN_TRADER, CaravanTraderEntity.createAttributes().build())
     }
 
     private fun onLootTableLoad(event: LootTableLoadEvent) {

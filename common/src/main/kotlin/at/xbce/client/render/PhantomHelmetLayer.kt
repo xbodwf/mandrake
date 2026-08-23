@@ -17,8 +17,8 @@ import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.component.DyedItemColor
 
 /**
- * 幻翼专属头盔层（原版 HumanoidArmorLayer 的泛型要求父模型是人形，幻翼挂不上）。
- * 手动对齐幻翼模型的 body > head 部件，把偷来的头盔渲染上去。
+ * 幻翼赃物层：偷来的头盔不戴着，而是像爪下攥着战利品一样
+ * 挂在身体正下方（对齐 body 部件，随俯仰摆动）。
  */
 class PhantomHelmetLayer(
     parent: RenderLayerParent<Phantom, PhantomModel<Phantom>>,
@@ -41,12 +41,13 @@ class PhantomHelmetLayer(
         val item = stack.item
         if (item !is ArmorItem || item.equipmentSlot != EquipmentSlot.HEAD) return
 
-        // 对齐幻翼头部部件（含俯仰姿态），再缩放盖住小脑袋
-        val head = this.parentModel.root().getChild("body").getChild("head")
+        // 挂在身体正下方：对齐 body 部件（随俯仰摆动），再往下偏移
+        // 注意：PoseStack.translate 单位是"格"，模型像素要除以 16
+        val body = this.parentModel.root().getChild("body")
         poseStack.pushPose()
-        head.translateAndRotate(poseStack)
-        poseStack.translate(0.0f, 0.9f, -2.4f)
-        poseStack.scale(0.55f, 0.55f, 0.55f)
+        body.translateAndRotate(poseStack)
+        poseStack.translate(0.0f, -0.425f, -0.20f)
+        poseStack.scale(0.75f, 0.75f, 0.75f)
 
         helmetModel.setAllVisible(false)
         helmetModel.head.visible = true

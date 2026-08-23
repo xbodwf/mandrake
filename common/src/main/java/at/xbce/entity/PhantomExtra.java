@@ -25,6 +25,12 @@ public interface PhantomExtra {
     /** 当前是否处于装死状态。 */
     boolean xbce$isPlayingDead();
 
-    /** 是否携带着烟花（客户端渲染层据此在翅膀上画出烟花火箭）。注意：会被 Kotlin 侧调用，方法名不能含 $。 */
+    /** 是否携带着烟花。注意：会被 Kotlin 侧调用，方法名不能含 $。 */
     boolean xbceHasFireworks();
+
+    /** 背上挂载的烟花数量 0~2（Kotlin 侧调用，方法名不能含 $）。 */
+    int xbceFireworkCount();
+
+    /** 追击模式命中猎物时回调：重置追击疲劳。 */
+    void xbce$onSweepLanded(Entity target);
 }

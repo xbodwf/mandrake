@@ -37,11 +37,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
  * 幻翼整活合集（直接增强原版幻翼）：
- *  1. 烟花加速：俯冲途中点燃烟花——爆响 + 火花尾迹 + 瞬间加速变向，可连续使用；
- *     用过烟花的幻翼翅膀上会绑着可见的烟花火箭，死亡时掉落。
+ *  1. 烟花加速（空战战术）：玩家开鞘翅逃跑 → 高概率点火紧咬；俯冲攻击 → 概率点火加速；
+ *     自身残血 → 点火反向脱离。翅膀上绑着可见的烟花火箭，死亡时掉落。
  *  2. 装死骗膜：被玩家打死时有概率装死坠落，掉出“幻翼膜”诱饵（无法拾取）；
  *     玩家靠近即尖啸复活、诱饵凭空消失；无人问津则连尸带膜一并蒸发。
- *  3. 俯冲偷盔：掠过玩家时叼走头盔自己戴上（下界合金太重抢不动），杀死后归还。
+ *  3. 俯冲偷盔：掠过玩家时叼走头盔挂在身下（下界合金太重抢不动），杀死后归还。
  *  4. 抓取升空：咬住玩家拽上天再松手，摔落伤害自理；打中幻翼可提前脱身。
  *  5. 空运轰炸：一生一次，抓起附近苦力怕飞到目标头顶空投。
  */
@@ -59,10 +59,18 @@ public abstract class PhantomMixin implements PhantomExtra {
     @Unique private static final int XBCE_BOOST_COOLDOWN = 25;
     /** 烟花加速期间的速度上限（格/tick），约等于鞘翅 + 火箭连发的巡航速度。 */
     @Unique private static final float XBCE_BOOST_SPEED = 2.4F;
+    /** 追击模式速度：略高于玩家烟花连发，保证能咬上。 */
+    @Unique private static final float XBCE_PURSUE_SPEED = 2.6F;
+    // 追击断锁参数
+    @Unique private static final int XBCE_PURSUIT_LOST_SIGHT = 30;    // 丢视线 1.5s 断锁
+    @Unique private static final int XBCE_PURSUIT_GROUND = 20;        // 猎物落地 1s 断锁
+    @Unique private static final int XBCE_PURSUIT_EXHAUST = 200;      // 累计追击 10s 未命中 → 疲劳
+    @Unique private static final long XBCE_PURSUIT_BAN = 600L;        // 疲劳后 30s 不再追击
+    @Unique private static final double XBCE_PURSUIT_BREAK_DIST_SQR = 96.0D * 96.0D;
 
-    /** 是否携带烟花（同步给客户端，渲染层据此画出翅膀上的烟花）。 */
-    @Unique private static final EntityDataAccessor<Boolean> XBCE_HAS_FIREWORKS =
-        SynchedEntityData.defineId(Phantom.class, EntityDataSerializers.BOOLEAN);
+    /** 背上挂载的烟花数量 0~2（同步给客户端渲染层）。 */
+    @Unique private static final EntityDataAccessor<Integer> XBCE_FIREWORK_COUNT =
+        SynchedEntityData.defineId(Phantom.class, EntityDataSerializers.INT);
 
     /** 玩家维度级别的抓取冷却（跨幻翼共享，防止围殴式连环抓）。 */
     @Unique private static final Map<UUID, Long> XBCE_GRAB_COOLDOWNS = new HashMap<>();
@@ -78,7 +86,18 @@ public abstract class PhantomMixin implements PhantomExtra {
     @Unique private boolean xbce$fireworksUser = false;
     @Unique private int xbce$boostCooldown = 0;
     @Unique private int xbce$boostTicksLeft = 0;
+    /** 0=进攻（移控直扑目标） 1=撤离（反向推力） 2=追击（直接朝鞘翅玩家 homing） */
+    @Unique private int xbce$boostMode = 0;
+    @Unique private UUID xbce$pursuitId = null;
+    // 追击断锁状态
+    @Unique private int xbce$lostSightTicks = 0;
+    @Unique private int xbce$preyGroundTicks = 0;
+    @Unique private int xbce$pursuitTicks = 0;
+    @Unique private long xbce$pursuitBanUntil = 0L;
     @Unique private int xbce$trailTicks = 0;
+    // 背上烟花挂载数（链式点火累计，最多 2）
+    @Unique private int xbce$chainCount = 0;
+    @Unique private long xbce$chainResetAt = 0L;
 
     @Unique private boolean xbce$grabbing = false;
     @Unique private UUID xbce$grabVictimId = null;
@@ -100,7 +119,7 @@ public abstract class PhantomMixin implements PhantomExtra {
 
     @Inject(method = "defineSynchedData", at = @At("TAIL"))
     private void xbce$defineExtraData(SynchedEntityData.Builder builder, CallbackInfo ci) {
-        builder.define(XBCE_HAS_FIREWORKS, false);
+        builder.define(XBCE_FIREWORK_COUNT, 0);
     }
 
     @Inject(method = "aiStep", at = @At("TAIL"))
@@ -202,7 +221,23 @@ public abstract class PhantomMixin implements PhantomExtra {
     @Override
     @Unique
     public boolean xbceHasFireworks() {
-        return xbce$entity().getEntityData().get(XBCE_HAS_FIREWORKS);
+        return this.xbceFireworkCount() > 0;
+    }
+
+    @Override
+    @Unique
+    public int xbceFireworkCount() {
+        return xbce$entity().getEntityData().get(XBCE_FIREWORK_COUNT);
+    }
+
+    @Override
+    @Unique
+    public void xbce$onSweepLanded(Entity target) {
+        // 追击中咬到猎物 → 疲劳清零，允许继续锁下去
+        if (xbce$boostMode == 2 && xbce$pursuitId != null
+            && target.getUUID().equals(xbce$pursuitId)) {
+            xbce$pursuitTicks = 0;
+        }
     }
 
     @Override
@@ -336,16 +371,73 @@ public abstract class PhantomMixin implements PhantomExtra {
     private void xbce$tickFireworkBoost(ServerLevel level) {
         Mob self = xbce$mob();
 
-        // 持续加速中：顶住移控速度上限，模拟烟花推力
+        // 燃尽且过了展示期 → 背上烟花卸下
+        if (xbce$boostTicksLeft <= 0 && xbce$chainCount > 0 && level.getGameTime() >= xbce$chainResetAt) {
+            xbce$chainCount = 0;
+            self.getEntityData().set(XBCE_FIREWORK_COUNT, 0);
+        }
+
+        // 持续加速中
         if (xbce$boostTicksLeft > 0) {
-            if (self.getMoveControl() instanceof PhantomBoostControl ctrl) {
-                ctrl.xbce$setBoostSpeed(XBCE_BOOST_SPEED);
+            switch (xbce$boostMode) {
+                case 2 -> {
+                    // 追击：按自持的 UUID 锁定猎物（不依赖原版索敌），每 tick 朝其 homing
+                    LivingEntity prey = null;
+                    if (xbce$pursuitId != null) {
+                        net.minecraft.world.entity.player.Player locked = level.getPlayerByUUID(xbce$pursuitId);
+                        if (locked != null && locked.isAlive() && !locked.isSpectator() && !locked.isCreative()) prey = locked;
+                    }
+                    if (prey == null) {
+                        xbce$boostTicksLeft = 1; // 猎物消失，下 tick 燃尽
+                    } else {
+                        // 断锁判定：丢视线 / 猎物落地 / 距离超限 / 疲劳上限
+                        xbce$lostSightTicks = self.hasLineOfSight(prey) ? 0 : xbce$lostSightTicks + 1;
+                        xbce$preyGroundTicks = prey.isFallFlying() ? 0 : xbce$preyGroundTicks + 1;
+                        xbce$pursuitTicks++;
+                        boolean breakOff = xbce$lostSightTicks >= XBCE_PURSUIT_LOST_SIGHT
+                            || xbce$preyGroundTicks >= XBCE_PURSUIT_GROUND
+                            || xbce$pursuitTicks >= XBCE_PURSUIT_EXHAUST
+                            || self.distanceToSqr(prey) > XBCE_PURSUIT_BREAK_DIST_SQR;
+                        if (breakOff) {
+                            xbce$boostTicksLeft = 1;
+                            xbce$pursuitBanUntil = level.getGameTime() + XBCE_PURSUIT_BAN;
+                        } else {
+                            Vec3 to = prey.position().add(0.0D, 1.0D, 0.0D).subtract(self.position());
+                            if (to.lengthSqr() > 1.0D) {
+                                to = to.normalize();
+                                self.setDeltaMovement(self.getDeltaMovement().lerp(to.scale(XBCE_PURSUE_SPEED), 0.5D));
+                            }
+                        }
+                    }
+                }
+                case 1 -> {
+                    // 撤离：反向推力甩开目标
+                    LivingEntity target = self.getTarget();
+                    double ax = target != null ? self.getX() - target.getX() : 1.0D;
+                    double az = target != null ? self.getZ() - target.getZ() : 0.0D;
+                    Vec3 away = new Vec3(ax, 0.0D, az);
+                    if (away.lengthSqr() < 1.0E-4D) away = new Vec3(0.0D, 0.0D, 1.0D);
+                    away = away.normalize().add(0.0D, 0.35D, 0.0D).normalize();
+                    self.setDeltaMovement(self.getDeltaMovement().lerp(away.scale(XBCE_BOOST_SPEED), 0.35D));
+                }
+                default -> {
+                    // 进攻：顶住移控速度上限，直扑 moveTargetPoint（俯冲阶段=玩家位置）
+                    if (self.getMoveControl() instanceof PhantomBoostControl ctrl) {
+                        ctrl.xbce$setBoostSpeed(XBCE_BOOST_SPEED);
+                    }
+                }
             }
-            level.sendParticles(ParticleTypes.FIREWORK,
-                self.getX(), self.getY(), self.getZ(), 3, 0.2D, 0.2D, 0.2D, 0.03D);
+            xbce$wingParticles(level, self, 2, 0.03D);
             xbce$boostTicksLeft--;
-            if (xbce$boostTicksLeft <= 0 && self.getMoveControl() instanceof PhantomBoostControl ctrl) {
-                ctrl.xbce$setBoostSpeed(0.2F); // 燃尽回落，靠自然缓升恢复巡航
+            if (xbce$boostTicksLeft <= 0) {
+                if (xbce$boostMode == 0 && self.getMoveControl() instanceof PhantomBoostControl ctrl) {
+                    ctrl.xbce$setBoostSpeed(0.2F); // 燃尽回落，靠自然缓升恢复巡航
+                }
+                if (xbce$boostMode == 2) {
+                    xbce$pursuitId = null;
+                }
+                xbce$boostMode = 0;
+                xbce$chainResetAt = level.getGameTime() + 30L; // 30t 内再点火算连发，否则卸下烟花
                 self.playSound(SoundEvents.FIREWORK_ROCKET_BLAST, 1.5F, 1.0F);
             }
             return;
@@ -353,8 +445,7 @@ public abstract class PhantomMixin implements PhantomExtra {
 
         if (xbce$trailTicks > 0) {
             xbce$trailTicks--;
-            level.sendParticles(ParticleTypes.FIREWORK,
-                self.getX(), self.getY(), self.getZ(), 2, 0.15D, 0.15D, 0.15D, 0.02D);
+            xbce$wingParticles(level, self, 2, 0.02D);
         }
 
         if (xbce$boostCooldown > 0) {
@@ -362,38 +453,86 @@ public abstract class PhantomMixin implements PhantomExtra {
             return;
         }
 
-        LivingEntity target = self.getTarget();
-        if (target == null || !target.isAlive()) return;
+        // 追击扫描：96 格内开着鞘翅且看得见的生存玩家（疲劳禁令期间不追）
+        net.minecraft.world.entity.player.Player fleeing = null;
+        double best = 96.0D * 96.0D;
+        if (level.getGameTime() >= xbce$pursuitBanUntil) {
+            for (net.minecraft.world.entity.player.Player player : level.players()) {
+                if (player.isSpectator() || player.isCreative()) continue;
+                if (!player.isFallFlying()) continue;
+                double distSqr = self.distanceToSqr(player);
+                if (distSqr < 64.0D || distSqr >= best) continue;
+                if (!self.hasLineOfSight(player)) continue; // 看不见的不锁
+                best = distSqr;
+                fleeing = player;
+            }
+        }
 
-        double dh = self.getY() - target.getY();
-        double dx = target.getX() - self.getX();
-        double dz = target.getZ() - self.getZ();
+        LivingEntity target = self.getTarget();
+        boolean wounded = self.getHealth() <= self.getMaxHealth() * 0.3F;
+        double dh = target != null ? self.getY() - target.getY() : 0.0D;
+        double dx = target != null ? target.getX() - self.getX() : 0.0D;
+        double dz = target != null ? target.getZ() - self.getZ() : 0.0D;
         double horiz = Math.sqrt(dx * dx + dz * dz);
         Vec3 dm = self.getDeltaMovement();
+        boolean diving = target != null && dm.y < -0.05D && dh > 1.5D && dh < 24.0D && horiz < 16.0D;
 
-        // 俯冲特征：下降中 + 高于目标 + 横向接近（窗口放宽以便连续点火）
-        boolean diving = dm.y < -0.05D && dh > 1.5D && dh < 24.0D && horiz < 16.0D;
-        if (!diving || self.getRandom().nextInt(40) != 0) return;
-
-        // 飞行时间 1~3：与原版烟花火箭寿命公式一致
-        int duration = 1 + self.getRandom().nextInt(3);
-        xbce$boostTicksLeft = 10 * duration + self.getRandom().nextInt(6) + self.getRandom().nextInt(6);
-        if (self.getMoveControl() instanceof PhantomBoostControl ctrl) {
-            ctrl.xbce$setBoostSpeed(XBCE_BOOST_SPEED);
+        if (wounded && self.getRandom().nextInt(15) == 0) {
+            xbce$igniteBoost(level, 10 + self.getRandom().nextInt(20), 1);
+        } else if (fleeing != null) {
+            // 该用就用：咬住鞘翅玩家不撒口（短冷却，链式点火）
+            self.setTarget(fleeing);
+            xbce$pursuitId = fleeing.getUUID();
+            xbce$igniteBoost(level, 30 + self.getRandom().nextInt(20), 2);
+        } else if (diving && self.getRandom().nextInt(20) == 0) {
+            xbce$igniteBoost(level, 10 * (1 + self.getRandom().nextInt(3)) + self.getRandom().nextInt(6) + self.getRandom().nextInt(6), 0);
         }
-        // 初始一脚油门，朝当前运动方向踹出去
-        Vec3 kick = dm.add(dm.x * 0.4D, 0.15D, dm.z * 0.4D);
-        if (kick.lengthSqr() > XBCE_BOOST_SPEED * XBCE_BOOST_SPEED) {
-            kick = kick.normalize().scale(XBCE_BOOST_SPEED);
-        }
-        self.setDeltaMovement(kick);
+    }
 
-        self.getEntityData().set(XBCE_HAS_FIREWORKS, true); // 翅膀上亮出烟花
+    /** 点燃烟花：mode 0=进攻 1=撤离 2=追击。 */
+    @Unique
+    private void xbce$igniteBoost(ServerLevel level, int durationTicks, int mode) {
+        Mob self = xbce$mob();
+        xbce$boostTicksLeft = durationTicks;
+        xbce$boostMode = mode;
+        if (mode == 2) {
+            xbce$lostSightTicks = 0;
+            xbce$preyGroundTicks = 0;
+            xbce$pursuitTicks = 0;
+        }
+        if (mode != 1) {
+            // 进攻/追击：初始一脚油门朝当前运动方向踹出去
+            Vec3 dm = self.getDeltaMovement();
+            Vec3 kick = dm.add(dm.x * 0.4D, 0.15D, dm.z * 0.4D);
+            if (kick.lengthSqr() > XBCE_BOOST_SPEED * XBCE_BOOST_SPEED) {
+                kick = kick.normalize().scale(XBCE_BOOST_SPEED);
+            }
+            self.setDeltaMovement(kick);
+            if (mode == 0 && self.getMoveControl() instanceof PhantomBoostControl ctrl) {
+                ctrl.xbce$setBoostSpeed(XBCE_BOOST_SPEED);
+            }
+        }
+        // 背上挂载：链式点火累计，最多同时 2 支
+        xbce$chainCount = Math.min(xbce$chainCount + 1, 2);
+        self.getEntityData().set(XBCE_FIREWORK_COUNT, xbce$chainCount);
         xbce$fireworksUser = true;
-        xbce$boostCooldown = XBCE_BOOST_COOLDOWN;
-        self.playSound(SoundEvents.FIREWORK_ROCKET_LAUNCH, 2.0F, 1.0F);
-        level.sendParticles(ParticleTypes.FIREWORK,
-            self.getX(), self.getY(), self.getZ(), 12, 0.4D, 0.4D, 0.4D, 0.12D);
+        xbce$boostCooldown = (mode == 2) ? 10 : XBCE_BOOST_COOLDOWN; // 追击链式点火
+        self.playSound(SoundEvents.FIREWORK_ROCKET_LAUNCH, 2.0F, mode == 1 ? 0.8F : 1.0F);
+        xbce$wingParticles(level, self, 8, 0.12D);
+    }
+
+    /** 双翼喷口粒子：以机身为轴，左右各一个发射点。 */
+    @Unique
+    private void xbce$wingParticles(ServerLevel level, Mob self, int count, double speed) {
+        float yaw = self.getYRot() * ((float) Math.PI / 180F);
+        double rx = Math.cos(yaw) * 0.55D; // 垂直于朝向的横向分量
+        double rz = Math.sin(yaw) * 0.55D;
+        for (int side = 0; side < 2; side++) {
+            double s = side == 0 ? 1.0D : -1.0D;
+            level.sendParticles(ParticleTypes.FIREWORK,
+                self.getX() + rx * s, self.getY() + 0.2D, self.getZ() + rz * s,
+                count, 0.15D, 0.15D, 0.15D, speed);
+        }
     }
 
     // ----------------------------------------------------------------- bomber
@@ -522,8 +661,8 @@ public abstract class PhantomMixin implements PhantomExtra {
         if (xbce$fakingDeath) {
             xbce$mob().setNoAi(true);
         }
-        if (xbce$fireworksUser) {
-            xbce$entity().getEntityData().set(XBCE_HAS_FIREWORKS, true);
-        }
+        // 重载后背上烟花清空，下次点火重新挂载
+        xbce$chainCount = 0;
+        xbce$mob().getEntityData().set(XBCE_FIREWORK_COUNT, 0);
     }
 }

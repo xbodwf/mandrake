@@ -2,7 +2,6 @@ package at.xbce.client
 
 import at.xbce.XBCE
 import at.xbce.client.model.FakeSnowGolemModel
-import at.xbce.client.render.FakeIronGolemRenderer
 import at.xbce.client.render.FakeSnowGolemModelLayers
 import at.xbce.client.render.FakeSnowGolemRenderer
 import at.xbce.client.render.FakeVillagerRenderer
@@ -30,10 +29,6 @@ object XBCENeoForgeClient {
 
         event.registerEntityRenderer(XBCE.FAKE_VILLAGER) { ctx ->
             FakeVillagerRenderer(ctx)
-        }
-
-        event.registerEntityRenderer(XBCE.FAKE_IRON_GOLEM) { ctx ->
-            FakeIronGolemRenderer(ctx)
         }
     }
 }

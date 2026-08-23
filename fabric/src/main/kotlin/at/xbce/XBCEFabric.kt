@@ -1,6 +1,5 @@
 package at.xbce
 
-import at.xbce.entity.FakeIronGolemEntity
 import at.xbce.entity.FakeSnowGolemEntity
 import at.xbce.entity.FakeVillagerEntity
 import net.fabricmc.api.ModInitializer
@@ -21,7 +20,6 @@ class XBCEFabric : ModInitializer {
 
         FabricDefaultAttributeRegistry.register(XBCE.FAKE_SNOW_GOLEM, FakeSnowGolemEntity.createAttributes().build())
         FabricDefaultAttributeRegistry.register(XBCE.FAKE_VILLAGER, FakeVillagerEntity.createAttributes().build())
-        FabricDefaultAttributeRegistry.register(XBCE.FAKE_IRON_GOLEM, FakeIronGolemEntity.createAttributes().build())
 
         ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.INGREDIENTS).register { entries ->
             entries.accept(XBCE.ENDER_EYE_SMITHING_TEMPLATE)

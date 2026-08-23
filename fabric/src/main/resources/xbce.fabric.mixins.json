@@ -18,6 +18,8 @@
     "PhantomMoveControlMixin",
     "MobSweepMixin",
     "LivingEntityPhantomMixin",
+    "SilverfishJockeyMixin",
+    "SilverfishJockeyLivingMixin",
     "LivingEntityLayersAccessor"
   ],
   "client": [

@@ -1,6 +1,5 @@
 package at.xbce
 
-import at.xbce.entity.FakeIronGolemEntity
 import at.xbce.entity.FakeSnowGolemEntity
 import at.xbce.entity.FakeVillagerEntity
 import at.xbce.item.RevealSpyglassItem
@@ -66,14 +65,6 @@ class XBCENeoForge(modBus: IEventBus) {
         }
     )
 
-    private val fakeIronGolem = entities.register("fake_iron_golem",
-        Supplier { EntityType.Builder.of({ type, level -> FakeIronGolemEntity(type, level) }, MobCategory.CREATURE)
-            .sized(1.4f, 2.7f)
-            .clientTrackingRange(10)
-            .build("fake_iron_golem")
-        }
-    )
-
     init {
         items.register(modBus)
         entities.register(modBus)
@@ -87,7 +78,6 @@ class XBCENeoForge(modBus: IEventBus) {
                 Registries.ENTITY_TYPE -> {
                     XBCE.FAKE_SNOW_GOLEM = fakeSnowGolem.get()
                     XBCE.FAKE_VILLAGER = fakeVillager.get()
-                    XBCE.FAKE_IRON_GOLEM = fakeIronGolem.get()
                 }
             }
         }
@@ -112,7 +102,6 @@ class XBCENeoForge(modBus: IEventBus) {
     private fun onEntityAttributeCreation(event: EntityAttributeCreationEvent) {
         event.put(XBCE.FAKE_SNOW_GOLEM, FakeSnowGolemEntity.createAttributes().build())
         event.put(XBCE.FAKE_VILLAGER, FakeVillagerEntity.createAttributes().build())
-        event.put(XBCE.FAKE_IRON_GOLEM, FakeIronGolemEntity.createAttributes().build())
     }
 
     private fun onLootTableLoad(event: LootTableLoadEvent) {

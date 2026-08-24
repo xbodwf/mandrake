@@ -8,7 +8,10 @@ import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.EntityType
 import net.minecraft.world.entity.MobCategory
+import net.minecraft.world.item.CreativeModeTab
 import net.minecraft.world.item.Item
+import net.minecraft.world.item.ItemStack
+import net.minecraft.world.item.SpawnEggItem
 import net.minecraft.world.item.SmithingTemplateItem
 import net.minecraft.ChatFormatting
 import net.minecraft.network.chat.Component
@@ -21,6 +24,9 @@ object XBCE {
 
     lateinit var ENDER_EYE_SMITHING_TEMPLATE: Item
     lateinit var REVEAL_SPYGLASS: Item
+    lateinit var FAKE_SNOW_GOLEM_SPAWN_EGG: Item
+    lateinit var FAKE_VILLAGER_SPAWN_EGG: Item
+    lateinit var MAIN_TAB: CreativeModeTab
 
     fun id(path: String) = ResourceLocation.fromNamespaceAndPath(MOD_ID, path)
 
@@ -61,6 +67,34 @@ object XBCE {
         REVEAL_SPYGLASS = Registry.register(
             BuiltInRegistries.ITEM, id("reveal_spyglass"),
             RevealSpyglassItem(Item.Properties().stacksTo(1))
+        )
+
+        // 颜色填白色：纹理本身已上色（26.2 风格），避免被原版刷怪蛋 tint 二次染色
+        FAKE_SNOW_GOLEM_SPAWN_EGG = Registry.register(
+            BuiltInRegistries.ITEM, id("fake_snow_golem_spawn_egg"),
+            SpawnEggItem(FAKE_SNOW_GOLEM, 0xFFFFFF, 0xFFFFFF, Item.Properties())
+        )
+
+        FAKE_VILLAGER_SPAWN_EGG = Registry.register(
+            BuiltInRegistries.ITEM, id("fake_villager_spawn_egg"),
+            SpawnEggItem(FAKE_VILLAGER, 0xFFFFFF, 0xFFFFFF, Item.Properties())
+        )
+    }
+
+    fun registerCreativeTab() {
+        MAIN_TAB = Registry.register(
+            BuiltInRegistries.CREATIVE_MODE_TAB,
+            id("main"),
+            CreativeModeTab.builder()
+                .title(Component.translatable("itemGroup.xbce.main"))
+                .icon { ItemStack(REVEAL_SPYGLASS) }
+                .displayItems { _, output ->
+                    output.accept(ENDER_EYE_SMITHING_TEMPLATE)
+                    output.accept(REVEAL_SPYGLASS)
+                    output.accept(FAKE_SNOW_GOLEM_SPAWN_EGG)
+                    output.accept(FAKE_VILLAGER_SPAWN_EGG)
+                }
+                .build()
         )
     }
 }

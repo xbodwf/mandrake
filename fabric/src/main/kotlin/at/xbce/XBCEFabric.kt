@@ -17,6 +17,7 @@ class XBCEFabric : ModInitializer {
     override fun onInitialize() {
         XBCE.registerEntities()
         XBCE.registerItems()
+        XBCE.registerCreativeTab()
 
         FabricDefaultAttributeRegistry.register(XBCE.FAKE_SNOW_GOLEM, FakeSnowGolemEntity.createAttributes().build())
         FabricDefaultAttributeRegistry.register(XBCE.FAKE_VILLAGER, FakeVillagerEntity.createAttributes().build())
@@ -27,9 +28,9 @@ class XBCEFabric : ModInitializer {
         ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.TOOLS_AND_UTILITIES).register { entries ->
             entries.accept(XBCE.REVEAL_SPYGLASS)
         }
-
-        net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents.AFTER_DEATH.register { entity, source ->
-            at.xbce.XBCEAdvancements.onDeath(entity, source)
+        ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.SPAWN_EGGS).register { entries ->
+            entries.accept(XBCE.FAKE_SNOW_GOLEM_SPAWN_EGG)
+            entries.accept(XBCE.FAKE_VILLAGER_SPAWN_EGG)
         }
 
         LootTableEvents.MODIFY.register { key, tableBuilder, source, _ ->

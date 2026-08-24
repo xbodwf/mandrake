@@ -26,6 +26,12 @@ public abstract class TargetingConditionsMixin {
 
     @Inject(method = "test", at = @At("HEAD"), cancellable = true)
     private void xbce$stealthDetection(LivingEntity attacker, LivingEntity target, CallbackInfoReturnable<Boolean> cir) {
+        // 卫道士认得自己人：不会攻击伪装成村民的同伴（假村民），避免现形连锁反应
+        if (attacker instanceof net.minecraft.world.entity.monster.Vindicator
+            && target instanceof at.xbce.entity.FakeVillagerEntity) {
+            cir.setReturnValue(false);
+            return;
+        }
         if (range <= 0) return;
         if (!(attacker instanceof Monster)) return;
         if (!(target instanceof Player player)) return;

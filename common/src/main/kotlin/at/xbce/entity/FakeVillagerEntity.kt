@@ -54,35 +54,42 @@ class FakeVillagerEntity(type: EntityType<out FakeVillagerEntity>, level: Level)
             ) { it is Player }
                 .minByOrNull { it.distanceToSqr(this) }
             if (near != null) {
-                reveal(near)
+                reveal(near, 0.0f)
             }
         }
     }
 
     override fun mobInteract(player: Player, hand: InteractionHand): InteractionResult {
         if (!level().isClientSide && !isRevealed) {
-            reveal(player)
+            reveal(player, 0.0f)
             return InteractionResult.sidedSuccess(false)
         }
         return super.mobInteract(player, hand)
     }
 
     override fun hurt(source: DamageSource, amount: Float): Boolean {
-        if (!level().isClientSide && !isRevealed && source.entity is Player) {
-            reveal(source.entity as Player)
+        // 任意来源的伤害都会撕破伪装；致命伤则直接以村民形态死亡
+        if (!level().isClientSide && !isRevealed && isAlive() && amount < health) {
+            reveal(source.entity as? net.minecraft.world.entity.LivingEntity, amount)
             return false
         }
         return super.hurt(source, amount)
     }
 
-    private fun reveal(triggeredBy: net.minecraft.world.entity.LivingEntity) {
+    private fun reveal(triggeredBy: net.minecraft.world.entity.LivingEntity?, carriedDamage: Float) {
         isRevealed = true
 
         val vindicator = EntityType.VINDICATOR.create(level()) ?: return
         vindicator.moveTo(position())
         vindicator.yRot = yRot
         vindicator.xRot = xRot
-        vindicator.target = triggeredBy
+        // 伤害继承：伪装生前挨的打全部记在卫道士头上
+        if (carriedDamage > 0.0f) {
+            vindicator.health = (vindicator.maxHealth - carriedDamage).coerceAtLeast(1.0f)
+        }
+        if (triggeredBy != null) {
+            vindicator.target = triggeredBy
+        }
         customName?.let { vindicator.customName = it }
 
         val axe = ItemStack(Items.IRON_AXE)

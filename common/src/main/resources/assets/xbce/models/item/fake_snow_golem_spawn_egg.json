@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/template_spawn_egg",
+  "textures": {
+    "layer0": "xbce:item/fake_snow_golem_spawn_egg"
+  }
+}

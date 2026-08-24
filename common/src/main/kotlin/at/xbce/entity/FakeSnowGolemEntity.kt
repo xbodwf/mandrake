@@ -31,7 +31,7 @@ import net.minecraft.world.phys.Vec3
  * 伪装成雪傀儡的苦力怕。
  *  - 自然生成时戴上雕刻南瓜，看起来和普通雪傀儡一样。
  *  - 剪掉南瓜头会露出苦力怕头，此时会被真雪傀儡认出并攻击。
- *  - 在非寒冷群系壳会逐渐融化，融化完毕后变成普通苦力怕。
+ *  - 仅在原版雪傀儡会受热损伤的酷热群系壳会逐渐融化，融化完毕后变成普通苦力怕。
  *  - 受到攻击时雪壳会逐层脱落。
  *  - 仍然保留苦力怕的膨胀 / 爆炸行为。
  */
@@ -101,11 +101,11 @@ class FakeSnowGolemEntity(type: EntityType<out FakeSnowGolemEntity>, level: Leve
             }
         }
 
-        // 非寒冷群系：每秒融化 1 层雪
+        // 仅在原版雪傀儡会受热损伤的酷热群系（温度 > 1.0，如沙漠/恶地/下界）才融化露馅；
+        // 普通的非雪地群系不会暴露伪装
         if (--meltCooldown <= 0) {
             meltCooldown = MELT_COOLDOWN
-            val pos = blockPosition()
-            if (!level.getBiome(pos).value().coldEnoughToSnow(pos)) {
+            if (level.getBiome(blockPosition()).value().getBaseTemperature() > 1.0f) {
                 reduceSnowLayer(level, 1)
             }
         }
@@ -166,6 +166,11 @@ class FakeSnowGolemEntity(type: EntityType<out FakeSnowGolemEntity>, level: Leve
         creeper.moveTo(x, y, z, yRot, xRot)
         creeper.yHeadRot = yHeadRot
         creeper.target = target
+        // 伤害继承：壳生前挨的打全部记在苦力怕头上
+        val carriedDamage = maxHealth - health
+        if (carriedDamage > 0.0f) {
+            creeper.health = (creeper.maxHealth - carriedDamage).coerceAtLeast(1.0f)
+        }
         customName?.let {
             creeper.customName = it
             creeper.isCustomNameVisible = isCustomNameVisible

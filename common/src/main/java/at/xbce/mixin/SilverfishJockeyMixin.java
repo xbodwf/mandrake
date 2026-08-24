@@ -13,6 +13,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.monster.Silverfish;
 import net.minecraft.world.entity.monster.Zombie;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ServerLevelAccessor;
 
 import org.spongepowered.asm.mixin.Mixin;
@@ -53,6 +54,13 @@ public abstract class SilverfishJockeyMixin implements JockeyExtra {
         Silverfish rider = EntityType.SILVERFISH.create(serverLevel);
         if (rider == null) return;
         rider.moveTo(self.getX(), self.getY(), self.getZ(), self.getYRot(), 0.0F);
+        rider.setPersistenceRequired();
+        // 出生即有敌意：锁定 32 格内最近的生存玩家（蠹虫本是中立怪，不锁就不会主动咬人）
+        Player prey = serverLevel.getNearestPlayer(self.getX(), self.getY(), self.getZ(), 32.0D,
+            p -> p instanceof Player player && !player.isSpectator() && !player.isCreative());
+        if (prey != null) {
+            rider.setTarget(prey);
+        }
         if (!rider.startRiding(self, true)) {
             rider.discard();
             return;

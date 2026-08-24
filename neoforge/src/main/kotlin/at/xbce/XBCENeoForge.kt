@@ -11,6 +11,7 @@ import net.minecraft.world.entity.EntityType
 import net.minecraft.world.entity.MobCategory
 import net.minecraft.world.item.CreativeModeTabs
 import net.minecraft.world.item.Item
+import net.minecraft.world.item.SpawnEggItem
 import net.minecraft.world.item.SmithingTemplateItem
 import net.minecraft.world.level.storage.loot.LootPool
 import net.minecraft.world.level.storage.loot.entries.LootItem
@@ -22,6 +23,7 @@ import net.neoforged.neoforge.common.NeoForge
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent
 import net.neoforged.neoforge.event.LootTableLoadEvent
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent
+import net.neoforged.neoforge.common.DeferredSpawnEggItem
 import net.neoforged.neoforge.registries.DeferredItem
 import net.neoforged.neoforge.registries.DeferredRegister
 import net.neoforged.neoforge.registries.RegisterEvent
@@ -32,6 +34,7 @@ class XBCENeoForge(modBus: IEventBus) {
 
     private val items = DeferredRegister.createItems(XBCE.MOD_ID)
     private val entities = DeferredRegister.create(Registries.ENTITY_TYPE, XBCE.MOD_ID)
+    private val tabs = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, XBCE.MOD_ID)
 
     private val revealSpyglass: DeferredItem<RevealSpyglassItem> = items.register("reveal_spyglass",
         Supplier { RevealSpyglassItem(Item.Properties().stacksTo(1)) }
@@ -48,6 +51,28 @@ class XBCENeoForge(modBus: IEventBus) {
             listOf(ResourceLocation.withDefaultNamespace("item/empty_slot_redstone_dust"))
         )}
     )
+
+    // 颜色填白色：纹理本身已上色（26.2 风格），避免被原版刷怪蛋 tint 二次染色
+    private val fakeSnowGolemEgg: DeferredItem<SpawnEggItem> = items.register("fake_snow_golem_spawn_egg",
+        Supplier { DeferredSpawnEggItem({ XBCE.FAKE_SNOW_GOLEM }, 0xFFFFFF, 0xFFFFFF, Item.Properties()) }
+    )
+
+    private val fakeVillagerEgg: DeferredItem<SpawnEggItem> = items.register("fake_villager_spawn_egg",
+        Supplier { DeferredSpawnEggItem({ XBCE.FAKE_VILLAGER }, 0xFFFFFF, 0xFFFFFF, Item.Properties()) }
+    )
+
+    private val mainTab = tabs.register("main", Supplier {
+        CreativeModeTab.builder()
+            .title(Component.translatable("itemGroup.xbce.main"))
+            .icon { net.minecraft.world.item.ItemStack(revealSpyglass.get()) }
+            .displayItems { _, output ->
+                output.accept(enderEyeTemplate.get())
+                output.accept(revealSpyglass.get())
+                output.accept(fakeSnowGolemEgg.get())
+                output.accept(fakeVillagerEgg.get())
+            }
+            .build()
+    })
 
     private val fakeSnowGolem = entities.register("fake_snow_golem",
         Supplier { EntityType.Builder.of({ type, level -> FakeSnowGolemEntity(type, level) }, MobCategory.MONSTER)
@@ -68,12 +93,15 @@ class XBCENeoForge(modBus: IEventBus) {
     init {
         items.register(modBus)
         entities.register(modBus)
+        tabs.register(modBus)
 
         modBus.addListener { event: RegisterEvent ->
             when (event.registryKey) {
                 Registries.ITEM -> {
                     XBCE.ENDER_EYE_SMITHING_TEMPLATE = enderEyeTemplate.get()
                     XBCE.REVEAL_SPYGLASS = revealSpyglass.get()
+                    XBCE.FAKE_SNOW_GOLEM_SPAWN_EGG = fakeSnowGolemEgg.get()
+                    XBCE.FAKE_VILLAGER_SPAWN_EGG = fakeVillagerEgg.get()
                 }
                 Registries.ENTITY_TYPE -> {
                     XBCE.FAKE_SNOW_GOLEM = fakeSnowGolem.get()
@@ -87,15 +115,16 @@ class XBCENeoForge(modBus: IEventBus) {
         modBus.addListener(at.xbce.client.XBCENeoForgeClient::onRegisterRenderers)
         modBus.addListener(at.xbce.client.XBCENeoForgeClient::onRegisterLayerDefinitions)
         NeoForge.EVENT_BUS.addListener(this::onLootTableLoad)
-        NeoForge.EVENT_BUS.addListener { event: net.neoforged.neoforge.event.entity.living.LivingDeathEvent ->
-            at.xbce.XBCEAdvancements.onDeath(event.entity, event.source)
-        }
     }
 
     private fun onCreativeTabContents(event: BuildCreativeModeTabContentsEvent) {
         when (event.tabKey) {
             CreativeModeTabs.INGREDIENTS -> event.accept(enderEyeTemplate.get())
             CreativeModeTabs.TOOLS_AND_UTILITIES -> event.accept(revealSpyglass.get())
+            CreativeModeTabs.SPAWN_EGGS -> {
+                event.accept(fakeSnowGolemEgg.get())
+                event.accept(fakeVillagerEgg.get())
+            }
         }
     }
 

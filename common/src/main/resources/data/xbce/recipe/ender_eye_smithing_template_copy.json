@@ -2,19 +2,19 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "pattern": [
-    "ETE",
-    "ECE",
-    "EEE"
+    "ABA",
+    "ACA",
+    "AAA"
   ],
   "key": {
-    "E": {
-      "item": "minecraft:ender_pearl"
+    "A": {
+      "item": "minecraft:mossy_stone_bricks"
     },
-    "T": {
+    "B": {
       "item": "xbce:ender_eye_smithing_template"
     },
     "C": {
-      "item": "minecraft:crying_obsidian"
+      "item": "minecraft:diamond"
     }
   },
   "result": {

@@ -8,9 +8,7 @@ import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.EntityType
 import net.minecraft.world.entity.MobCategory
-import net.minecraft.world.item.CreativeModeTab
 import net.minecraft.world.item.Item
-import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.SpawnEggItem
 import net.minecraft.world.item.SmithingTemplateItem
 import net.minecraft.ChatFormatting
@@ -26,7 +24,6 @@ object XBCE {
     lateinit var REVEAL_SPYGLASS: Item
     lateinit var FAKE_SNOW_GOLEM_SPAWN_EGG: Item
     lateinit var FAKE_VILLAGER_SPAWN_EGG: Item
-    lateinit var MAIN_TAB: CreativeModeTab
 
     fun id(path: String) = ResourceLocation.fromNamespaceAndPath(MOD_ID, path)
 
@@ -78,23 +75,6 @@ object XBCE {
         FAKE_VILLAGER_SPAWN_EGG = Registry.register(
             BuiltInRegistries.ITEM, id("fake_villager_spawn_egg"),
             SpawnEggItem(FAKE_VILLAGER, 0xFFFFFF, 0xFFFFFF, Item.Properties())
-        )
-    }
-
-    fun registerCreativeTab() {
-        MAIN_TAB = Registry.register(
-            BuiltInRegistries.CREATIVE_MODE_TAB,
-            id("main"),
-            CreativeModeTab.builder()
-                .title(Component.translatable("itemGroup.xbce.main"))
-                .icon { ItemStack(REVEAL_SPYGLASS) }
-                .displayItems { _, output ->
-                    output.accept(ENDER_EYE_SMITHING_TEMPLATE)
-                    output.accept(REVEAL_SPYGLASS)
-                    output.accept(FAKE_SNOW_GOLEM_SPAWN_EGG)
-                    output.accept(FAKE_VILLAGER_SPAWN_EGG)
-                }
-                .build()
         )
     }
 }

@@ -3,11 +3,16 @@ package at.xbce
 import at.xbce.entity.FakeSnowGolemEntity
 import at.xbce.entity.FakeVillagerEntity
 import net.fabricmc.api.ModInitializer
+import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents
 import net.fabricmc.fabric.api.loot.v3.LootTableEvents
 import net.fabricmc.fabric.api.`object`.builder.v1.entity.FabricDefaultAttributeRegistry
+import net.minecraft.core.Registry
+import net.minecraft.core.registries.BuiltInRegistries
+import net.minecraft.network.chat.Component
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.item.CreativeModeTabs
+import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.storage.loot.LootPool
 import net.minecraft.world.level.storage.loot.entries.LootItem
 import net.minecraft.world.level.storage.loot.predicates.LootItemRandomChanceCondition
@@ -17,7 +22,22 @@ class XBCEFabric : ModInitializer {
     override fun onInitialize() {
         XBCE.registerEntities()
         XBCE.registerItems()
-        XBCE.registerCreativeTab()
+
+        // 自定义物品栏（NeoForge 侧用其 builder()，Fabric 侧用 FabricItemGroup）
+        Registry.register(
+            BuiltInRegistries.CREATIVE_MODE_TAB,
+            XBCE.id("main"),
+            FabricItemGroup.builder()
+                .title(Component.translatable("itemGroup.xbce.main"))
+                .icon { ItemStack(XBCE.REVEAL_SPYGLASS) }
+                .displayItems { _, output ->
+                    output.accept(XBCE.ENDER_EYE_SMITHING_TEMPLATE)
+                    output.accept(XBCE.REVEAL_SPYGLASS)
+                    output.accept(XBCE.FAKE_SNOW_GOLEM_SPAWN_EGG)
+                    output.accept(XBCE.FAKE_VILLAGER_SPAWN_EGG)
+                }
+                .build()
+        )
 
         FabricDefaultAttributeRegistry.register(XBCE.FAKE_SNOW_GOLEM, FakeSnowGolemEntity.createAttributes().build())
         FabricDefaultAttributeRegistry.register(XBCE.FAKE_VILLAGER, FakeVillagerEntity.createAttributes().build())

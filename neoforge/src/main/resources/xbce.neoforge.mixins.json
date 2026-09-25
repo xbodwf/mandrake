@@ -18,6 +18,10 @@
     "LivingEntityPhantomMixin",
     "SilverfishJockeyMixin",
     "SilverfishJockeyLivingMixin",
+    "DefectiveEnchantMixin",
+    "DefectiveLootMixin",
+    "DefectiveBreakMixin",
+    "DefectiveArmorMixin",
     "LivingEntityLayersAccessor"
   ],
   "client": [

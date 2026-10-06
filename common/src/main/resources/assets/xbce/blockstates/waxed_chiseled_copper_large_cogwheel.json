@@ -1,0 +1,17 @@
+{
+  "variants": {
+    "axis=x": {
+      "model": "xbce:block/chiseled_copper_large_cogwheel",
+      "x": 90,
+      "y": 90
+    },
+    "axis=z": {
+      "model": "xbce:block/chiseled_copper_large_cogwheel",
+      "x": 90,
+      "y": 180
+    },
+    "axis=y": {
+      "model": "xbce:block/chiseled_copper_large_cogwheel"
+    }
+  }
+}

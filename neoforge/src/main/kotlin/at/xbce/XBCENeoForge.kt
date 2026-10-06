@@ -1,5 +1,6 @@
 package at.xbce
 
+import at.xbce.entity.CyanStaringFishEntity
 import at.xbce.entity.FakeSnowGolemEntity
 import at.xbce.entity.FakeVillagerEntity
 import at.xbce.item.RevealSpyglassItem
@@ -62,6 +63,10 @@ class XBCENeoForge(modBus: IEventBus) {
         Supplier { DeferredSpawnEggItem({ XBCE.FAKE_VILLAGER }, 0xFFFFFF, 0xFFFFFF, Item.Properties()) }
     )
 
+    private val cyanFishEgg: DeferredItem<SpawnEggItem> = items.register("cyan_staring_fish_spawn_egg",
+        Supplier { DeferredSpawnEggItem({ XBCE.CYAN_STARING_FISH }, 0x7FE9FF, 0x1E8FB5, Item.Properties()) }
+    )
+
     private val mainTab = tabs.register("main", Supplier {
         CreativeModeTab.builder()
             .title(Component.translatable("itemGroup.xbce.main"))
@@ -71,6 +76,7 @@ class XBCENeoForge(modBus: IEventBus) {
                 output.accept(revealSpyglass.get())
                 output.accept(fakeSnowGolemEgg.get())
                 output.accept(fakeVillagerEgg.get())
+                output.accept(cyanFishEgg.get())
             }
             .build()
     })
@@ -91,6 +97,14 @@ class XBCENeoForge(modBus: IEventBus) {
         }
     )
 
+    private val cyanStaringFish = entities.register("cyan_staring_fish",
+        Supplier { EntityType.Builder.of({ type, level -> CyanStaringFishEntity(type, level) }, MobCategory.WATER_AMBIENT)
+            .sized(0.5f, 0.3f)
+            .clientTrackingRange(8)
+            .build("cyan_staring_fish")
+        }
+    )
+
     init {
         items.register(modBus)
         entities.register(modBus)
@@ -103,10 +117,12 @@ class XBCENeoForge(modBus: IEventBus) {
                     XBCE.REVEAL_SPYGLASS = revealSpyglass.get()
                     XBCE.FAKE_SNOW_GOLEM_SPAWN_EGG = fakeSnowGolemEgg.get()
                     XBCE.FAKE_VILLAGER_SPAWN_EGG = fakeVillagerEgg.get()
+                    XBCE.CYAN_STARING_FISH_SPAWN_EGG = cyanFishEgg.get()
                 }
                 Registries.ENTITY_TYPE -> {
                     XBCE.FAKE_SNOW_GOLEM = fakeSnowGolem.get()
                     XBCE.FAKE_VILLAGER = fakeVillager.get()
+                    XBCE.CYAN_STARING_FISH = cyanStaringFish.get()
                 }
             }
         }
@@ -116,6 +132,20 @@ class XBCENeoForge(modBus: IEventBus) {
         modBus.addListener(at.xbce.client.XBCENeoForgeClient::onRegisterRenderers)
         modBus.addListener(at.xbce.client.XBCENeoForgeClient::onRegisterLayerDefinitions)
         NeoForge.EVENT_BUS.addListener(this::onLootTableLoad)
+        // 天青色瞪眼鱼的凝视判定（服务端每 tick）
+        NeoForge.EVENT_BUS.addListener { event: net.neoforged.neoforge.event.tick.ServerTickEvent.Post ->
+            CyanFishStare.tick(event.server)
+        }
+
+        // Create 6.x 软联动：铜传动杆家族（未装 Create 时完全不加载）
+        if (net.neoforged.fml.ModList.get().isLoaded("create")) {
+            at.xbce.create.XBCECopperBlocks.init(modBus)
+            modBus.addListener { _: net.neoforged.fml.event.lifecycle.FMLClientSetupEvent ->
+                if (net.neoforged.fml.ModList.get().isLoaded("create")) {
+                    at.xbce.create.client.XBCECopperClient.onClientSetup()
+                }
+            }
+        }
     }
 
     private fun onCreativeTabContents(event: BuildCreativeModeTabContentsEvent) {
@@ -125,6 +155,7 @@ class XBCENeoForge(modBus: IEventBus) {
             CreativeModeTabs.SPAWN_EGGS -> {
                 event.accept(fakeSnowGolemEgg.get())
                 event.accept(fakeVillagerEgg.get())
+                event.accept(cyanFishEgg.get())
             }
         }
     }
@@ -132,6 +163,7 @@ class XBCENeoForge(modBus: IEventBus) {
     private fun onEntityAttributeCreation(event: EntityAttributeCreationEvent) {
         event.put(XBCE.FAKE_SNOW_GOLEM, FakeSnowGolemEntity.createAttributes().build())
         event.put(XBCE.FAKE_VILLAGER, FakeVillagerEntity.createAttributes().build())
+        event.put(XBCE.CYAN_STARING_FISH, CyanStaringFishEntity.createAttributes().build())
     }
 
     private fun onLootTableLoad(event: LootTableLoadEvent) {

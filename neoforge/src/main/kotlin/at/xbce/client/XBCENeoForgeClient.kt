@@ -2,6 +2,7 @@ package at.xbce.client
 
 import at.xbce.XBCE
 import at.xbce.client.model.FakeSnowGolemModel
+import at.xbce.client.render.CyanStaringFishRenderer
 import at.xbce.client.render.FakeSnowGolemModelLayers
 import at.xbce.client.render.FakeSnowGolemRenderer
 import at.xbce.client.render.FakeVillagerRenderer
@@ -29,6 +30,15 @@ object XBCENeoForgeClient {
 
         event.registerEntityRenderer(XBCE.FAKE_VILLAGER) { ctx ->
             FakeVillagerRenderer(ctx)
+        }
+
+        event.registerEntityRenderer(XBCE.CYAN_STARING_FISH) { ctx ->
+            CyanStaringFishRenderer(ctx)
+        }
+
+        // Create 6.x 软联动（未装 Create 时跳过）
+        if (net.neoforged.fml.ModList.get().isLoaded("create")) {
+            at.xbce.create.client.XBCECopperClient.registerRenderers(event)
         }
     }
 }

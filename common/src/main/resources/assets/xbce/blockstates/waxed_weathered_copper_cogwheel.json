@@ -1,0 +1,17 @@
+{
+  "variants": {
+    "axis=x": {
+      "model": "xbce:block/weathered_copper_cogwheel",
+      "x": 90,
+      "y": 90
+    },
+    "axis=z": {
+      "model": "xbce:block/weathered_copper_cogwheel",
+      "x": 90,
+      "y": 180
+    },
+    "axis=y": {
+      "model": "xbce:block/weathered_copper_cogwheel"
+    }
+  }
+}

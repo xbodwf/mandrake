@@ -17,14 +17,22 @@ config = "xbce.neoforge.mixins.json"
 
 [[dependencies.xbce]]
 modId = "neoforge"
-mandatory = true
+type = "required"
 versionRange = "[21,)"
 ordering = "NONE"
 side = "BOTH"
 
 [[dependencies.xbce]]
 modId = "minecraft"
-mandatory = true
+type = "required"
 versionRange = "[1.21.1,)"
 ordering = "NONE"
+side = "BOTH"
+
+# Create 6.x 软联动（铜传动杆家族）：不装也能玩，装了之后在 Create 之后加载
+[[dependencies.xbce]]
+modId = "create"
+type = "optional"
+versionRange = "[6.0.10,)"
+ordering = "AFTER"
 side = "BOTH"

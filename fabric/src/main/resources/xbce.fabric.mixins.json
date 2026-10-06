@@ -18,6 +18,7 @@
     "LivingEntityPhantomMixin",
     "SilverfishJockeyMixin",
     "SilverfishJockeyLivingMixin",
+    "CyanFishSpawnMixin",
     "DefectiveEnchantMixin",
     "DefectiveLootMixin",
     "DefectiveBreakMixin",

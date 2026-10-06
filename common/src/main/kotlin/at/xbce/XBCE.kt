@@ -1,5 +1,6 @@
 package at.xbce
 
+import at.xbce.entity.CyanStaringFishEntity
 import at.xbce.entity.FakeSnowGolemEntity
 import at.xbce.entity.FakeVillagerEntity
 import at.xbce.item.RevealSpyglassItem
@@ -19,11 +20,13 @@ object XBCE {
 
     lateinit var FAKE_SNOW_GOLEM: EntityType<FakeSnowGolemEntity>
     lateinit var FAKE_VILLAGER: EntityType<FakeVillagerEntity>
+    lateinit var CYAN_STARING_FISH: EntityType<CyanStaringFishEntity>
 
     lateinit var ENDER_EYE_SMITHING_TEMPLATE: Item
     lateinit var REVEAL_SPYGLASS: Item
     lateinit var FAKE_SNOW_GOLEM_SPAWN_EGG: Item
     lateinit var FAKE_VILLAGER_SPAWN_EGG: Item
+    lateinit var CYAN_STARING_FISH_SPAWN_EGG: Item
 
     fun id(path: String) = ResourceLocation.fromNamespaceAndPath(MOD_ID, path)
 
@@ -44,6 +47,15 @@ object XBCE {
                 .sized(0.6f, 1.95f)
                 .clientTrackingRange(8)
                 .build("fake_villager")
+        )
+
+        CYAN_STARING_FISH = Registry.register(
+            BuiltInRegistries.ENTITY_TYPE,
+            id("cyan_staring_fish"),
+            EntityType.Builder.of({ type, level -> CyanStaringFishEntity(type, level) }, MobCategory.WATER_AMBIENT)
+                .sized(0.5f, 0.3f)
+                .clientTrackingRange(8)
+                .build("cyan_staring_fish")
         )
     }
 
@@ -75,6 +87,11 @@ object XBCE {
         FAKE_VILLAGER_SPAWN_EGG = Registry.register(
             BuiltInRegistries.ITEM, id("fake_villager_spawn_egg"),
             SpawnEggItem(FAKE_VILLAGER, 0xFFFFFF, 0xFFFFFF, Item.Properties())
+        )
+
+        CYAN_STARING_FISH_SPAWN_EGG = Registry.register(
+            BuiltInRegistries.ITEM, id("cyan_staring_fish_spawn_egg"),
+            SpawnEggItem(CYAN_STARING_FISH, 0x7FE9FF, 0x1E8FB5, Item.Properties())
         )
     }
 }

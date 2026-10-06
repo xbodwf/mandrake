@@ -1,8 +1,10 @@
 package at.xbce
 
+import at.xbce.entity.CyanStaringFishEntity
 import at.xbce.entity.FakeSnowGolemEntity
 import at.xbce.entity.FakeVillagerEntity
 import net.fabricmc.api.ModInitializer
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents
 import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents
 import net.fabricmc.fabric.api.loot.v3.LootTableEvents
@@ -35,12 +37,19 @@ class XBCEFabric : ModInitializer {
                     output.accept(XBCE.REVEAL_SPYGLASS)
                     output.accept(XBCE.FAKE_SNOW_GOLEM_SPAWN_EGG)
                     output.accept(XBCE.FAKE_VILLAGER_SPAWN_EGG)
+                    output.accept(XBCE.CYAN_STARING_FISH_SPAWN_EGG)
                 }
                 .build()
         )
 
         FabricDefaultAttributeRegistry.register(XBCE.FAKE_SNOW_GOLEM, FakeSnowGolemEntity.createAttributes().build())
         FabricDefaultAttributeRegistry.register(XBCE.FAKE_VILLAGER, FakeVillagerEntity.createAttributes().build())
+        FabricDefaultAttributeRegistry.register(XBCE.CYAN_STARING_FISH, CyanStaringFishEntity.createAttributes().build())
+
+        // 天青色瞪眼鱼的凝视判定（服务端每 tick）
+        ServerTickEvents.END_SERVER_TICK.register { server ->
+            CyanFishStare.tick(server)
+        }
 
         ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.INGREDIENTS).register { entries ->
             entries.accept(XBCE.ENDER_EYE_SMITHING_TEMPLATE)
@@ -51,6 +60,7 @@ class XBCEFabric : ModInitializer {
         ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.SPAWN_EGGS).register { entries ->
             entries.accept(XBCE.FAKE_SNOW_GOLEM_SPAWN_EGG)
             entries.accept(XBCE.FAKE_VILLAGER_SPAWN_EGG)
+            entries.accept(XBCE.CYAN_STARING_FISH_SPAWN_EGG)
         }
 
         LootTableEvents.MODIFY.register { key, tableBuilder, source, _ ->

@@ -21,6 +21,13 @@ dependencies {
     implementation("net.neoforged:neoforge:${project.findProperty("neoforge_version")}")
     implementation(project(":common"))
     implementation("org.jetbrains.kotlin:kotlin-stdlib:${project.findProperty("kotlin_version")}")
+
+    // Create 6 软联动（未装 Create 时功能不注册；Fabric 端不涉及）
+    implementation("com.simibubi.create:create-1.21.1:6.0.10-280:slim") { isTransitive = false }
+    implementation("net.createmod.ponder:ponder-neoforge:1.0.82+mc1.21.1")
+    compileOnly("dev.engine-room.flywheel:flywheel-neoforge-api-1.21.1:1.0.6")
+    runtimeOnly("dev.engine-room.flywheel:flywheel-neoforge-1.21.1:1.0.6")
+    compileOnly("com.tterrag.registrate:Registrate:MC1.21-1.3.0+67")
 }
 
 sourceSets {

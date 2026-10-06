@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:stonecutting",
+  "ingredient": {
+    "item": "xbce:weathered_copper_large_cogwheel"
+  },
+  "result": {
+    "id": "xbce:weathered_cut_copper_large_cogwheel",
+    "count": 1
+  },
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "create"
+    }
+  ]
+}

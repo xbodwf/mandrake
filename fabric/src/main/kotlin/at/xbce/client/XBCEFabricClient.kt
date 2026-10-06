@@ -1,6 +1,7 @@
 package at.xbce.client
 
 import at.xbce.XBCE
+import at.xbce.client.render.CyanStaringFishRenderer
 import at.xbce.client.render.FakeSnowGolemModelLayers
 import at.xbce.client.render.FakeSnowGolemRenderer
 import at.xbce.client.render.FakeVillagerRenderer
@@ -24,6 +25,10 @@ class XBCEFabricClient : ClientModInitializer {
 
         EntityRendererRegistry.register(XBCE.FAKE_VILLAGER) { ctx ->
             FakeVillagerRenderer(ctx)
+        }
+
+        EntityRendererRegistry.register(XBCE.CYAN_STARING_FISH) { ctx ->
+            CyanStaringFishRenderer(ctx)
         }
     }
 }

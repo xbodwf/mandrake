@@ -71,6 +71,13 @@
     "xbce:oxidized_chiseled_copper_cogwheel",
     "xbce:waxed_oxidized_chiseled_copper_cogwheel",
     "xbce:oxidized_chiseled_copper_large_cogwheel",
-    "xbce:waxed_oxidized_chiseled_copper_large_cogwheel"
+    "xbce:waxed_oxidized_chiseled_copper_large_cogwheel",
+    "xbce:waxed_copper_casing",
+    "xbce:exposed_copper_casing",
+    "xbce:waxed_exposed_copper_casing",
+    "xbce:weathered_copper_casing",
+    "xbce:waxed_weathered_copper_casing",
+    "xbce:oxidized_copper_casing",
+    "xbce:waxed_oxidized_copper_casing"
   ]
 }

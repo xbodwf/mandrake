@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "xbce:block/exposed_copper_casing",
+    "particle": "xbce:block/exposed_copper_casing"
+  }
+}

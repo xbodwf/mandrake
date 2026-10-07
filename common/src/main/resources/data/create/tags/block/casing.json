@@ -1,0 +1,11 @@
+{
+  "values": [
+    "xbce:waxed_copper_casing",
+    "xbce:exposed_copper_casing",
+    "xbce:waxed_exposed_copper_casing",
+    "xbce:weathered_copper_casing",
+    "xbce:waxed_weathered_copper_casing",
+    "xbce:oxidized_copper_casing",
+    "xbce:waxed_oxidized_copper_casing"
+  ]
+}

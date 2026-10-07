@@ -15,6 +15,12 @@ All's fair in war - mobs disguise themselves as friendly creatures!
 [[mixins]]
 config = "xbce.neoforge.mixins.json"
 
+# Create 专用 mixin（接管官方 create:copper_casing 的自然氧化与打蜡）。
+# 目标类属于可选依赖 create，因此单独放一个 required=false 的配置：
+# 没装 Create 时 Mixin 只记一条 WARN 并跳过，不会像 required=true 那样启动崩溃。
+[[mixins]]
+config = "xbce.create.mixins.json"
+
 [[dependencies.xbce]]
 modId = "neoforge"
 type = "required"

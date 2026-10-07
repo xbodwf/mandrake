@@ -140,9 +140,13 @@ class XBCENeoForge(modBus: IEventBus) {
         // Create 6.x 软联动：铜传动杆家族（未装 Create 时完全不加载）
         if (net.neoforged.fml.ModList.get().isLoaded("create")) {
             at.xbce.create.XBCECopperBlocks.init(modBus)
+            // 官方铜机壳（create:copper_casing）的氧化与打蜡由 at.xbce.mixin.CopperCasingMixin 直接接管，
+            // 因此这里不再需要额外的事件监听。
             modBus.addListener { _: net.neoforged.fml.event.lifecycle.FMLClientSetupEvent ->
                 if (net.neoforged.fml.ModList.get().isLoaded("create")) {
                     at.xbce.create.client.XBCECopperClient.onClientSetup()
+                    // 思索插件：Ponder 要到 FMLLoadCompleteEvent 才 registerAll，这里 addPlugin 正好赶得上
+                    at.xbce.create.client.XBCECopperPonder.register()
                 }
             }
         }

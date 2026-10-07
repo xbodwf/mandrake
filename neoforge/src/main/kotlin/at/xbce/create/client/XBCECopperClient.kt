@@ -7,13 +7,20 @@ import at.xbce.create.CopperOxidizableBlock
 import at.xbce.create.CopperStage
 import at.xbce.create.XBCECopperBlocks
 import at.xbce.create.copperBaseName
+import com.simibubi.create.AllSpriteShifts
 import com.simibubi.create.CreateClient
+import com.simibubi.create.content.decoration.encasing.EncasedCTBehaviour
 import com.simibubi.create.content.kinetics.base.RotatingInstance
 import com.simibubi.create.content.kinetics.base.SingleAxisRotatingVisual
 import com.simibubi.create.content.kinetics.simpleRelays.BracketedKineticBlockEntity
 import com.simibubi.create.content.kinetics.simpleRelays.BracketedKineticBlockEntityRenderer
 import com.simibubi.create.content.kinetics.simpleRelays.BracketedKineticBlockModel
+import com.simibubi.create.foundation.block.connected.AllCTTypes
+import com.simibubi.create.foundation.block.connected.CTModel
+import com.simibubi.create.foundation.block.connected.CTSpriteShiftEntry
+import com.simibubi.create.foundation.block.connected.CTSpriteShifter
 import com.simibubi.create.foundation.render.AllInstanceTypes
+import dev.engine_room.flywheel.api.instance.Instance
 import dev.engine_room.flywheel.api.model.Model
 import dev.engine_room.flywheel.api.visual.BlockEntityVisual
 import dev.engine_room.flywheel.api.visualization.VisualizationContext
@@ -23,6 +30,7 @@ import dev.engine_room.flywheel.lib.model.baked.PartialModel
 import dev.engine_room.flywheel.lib.visualization.SimpleBlockEntityVisualizer
 import net.minecraft.core.registries.BuiltInRegistries
 import net.neoforged.neoforge.client.event.EntityRenderersEvent
+import java.util.function.Consumer
 
 /**
  * 铜动力学方块的客户端渲染：
@@ -40,6 +48,26 @@ object XBCECopperClient {
 
     private fun model(stage: CopperStage, finish: CopperFinish, suffix: String): Model =
         Models.partial(partial("${copperBaseName(stage, finish)}_$suffix"))
+
+    /**
+     * 每个氧化度一套自己的 CT（连接纹理）shift。Create 的 CTModel 只在
+     * "模型用的 sprite == shift.getOriginal()" 时才重写 UV，所以：
+     *  - 纯铜（用官方贴图 create:block/copper_casing）继续复用官方 COPPER_CASING；
+     *  - 其余氧化度必须指向自己那套贴图，connected 图由 build/gen_casing_connected.py
+     *    对 create:block/copper_casing_connected 做与本体同样的 HSV 迁移生成（128x128 表）。
+     */
+    private val casingShifts: Map<CopperStage, CTSpriteShiftEntry> = mapOf(
+        CopperStage.COPPER to AllSpriteShifts.COPPER_CASING,
+        CopperStage.EXPOSED to casingShift("exposed"),
+        CopperStage.WEATHERED to casingShift("weathered"),
+        CopperStage.OXIDIZED to casingShift("oxidized"),
+    )
+
+    private fun casingShift(name: String): CTSpriteShiftEntry = CTSpriteShifter.getCT(
+        AllCTTypes.OMNIDIRECTIONAL,
+        XBCE.id("block/${name}_copper_casing"),
+        XBCE.id("block/${name}_copper_casing_connected")
+    )
 
     fun registerRenderers(event: EntityRenderersEvent.RegisterRenderers) {
         val type = XBCECopperBlocks.beType()
@@ -72,6 +100,20 @@ object XBCECopperClient {
             val block = holder.get()
             CreateClient.MODEL_SWAPPER.customBlockModels.register(BuiltInRegistries.BLOCK.getKey(block)) { baked ->
                 BracketedKineticBlockModel(baked)
+            }
+        }
+
+        // 铜机壳：注册到 Create 的机壳连接纹理（同氧化度的机壳相邻时接缝消失，视觉上连成整体）
+        for (holder in XBCECopperBlocks.casingHolders()) {
+            val block = holder.get()
+            val stage = (block as? CopperOxidizableBlock)?.stage ?: CopperStage.COPPER
+            val shift = casingShifts.getValue(stage)
+            // CasingConnectivity$Entry.getCasing() 之间是引用比较（if_acmpeq），所以只有共用同一个
+            // shift 对象的方块才会互相连接：同氧化度的涂蜡/未涂蜡共用一套贴图 ⇒ 共用 shift ⇒ 相连；
+            // 不同氧化度贴图不同 ⇒ 各自一套 shift ⇒ 不会连错色。
+            CreateClient.CASING_CONNECTIVITY.makeCasing(block, shift)
+            CreateClient.MODEL_SWAPPER.customBlockModels.register(BuiltInRegistries.BLOCK.getKey(block)) { baked ->
+                CTModel(baked, EncasedCTBehaviour(shift))
             }
         }
     }
@@ -119,6 +161,17 @@ object XBCECopperClient {
                 .setup(blockEntity)
                 .setRotationOffset(BracketedKineticBlockEntityRenderer.getShaftAngleOffset(rotationAxis(), pos))
                 .setChanged()
+        }
+
+        // 关键：中轴是独立实例，必须一起补光，否则它的 light 停在 0 → 渲染成黑色
+        override fun updateLight(partialTick: Float) {
+            super.updateLight(partialTick)
+            relight(additionalShaft)
+        }
+
+        override fun collectCrumblingInstances(consumer: Consumer<Instance?>) {
+            super.collectCrumblingInstances(consumer)
+            consumer.accept(additionalShaft)
         }
 
         override fun _delete() {

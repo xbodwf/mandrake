@@ -10,12 +10,15 @@
     }
   ],
   "result": {
-    "item": "minecraft:ender_eye",
+    "id": "minecraft:ender_eye",
     "count": 1
   },
-  "conditions": [
+  "fabric:load_conditions": [
     {
-      "type": "forge:false"
+      "condition": "fabric:not",
+      "value": {
+        "condition": "fabric:true"
+      }
     }
   ]
 }

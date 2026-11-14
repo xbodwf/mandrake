@@ -33,11 +33,7 @@ import net.neoforged.neoforge.client.event.EntityRenderersEvent
 import java.util.function.Consumer
 
 /**
- * 铜动力学方块的客户端渲染：
- *  - Flywheel 视觉按（工艺 + 氧化度）选择对应贴图的部分模型；
- *  - 方块模型套上 Create 的 BracketedKineticBlockModel（正常渲染时只画支架，避免与视觉重复）；
- *  - BER 用 Create 的支架渲染器（Flywheel 关闭时兜底）。
- * 仅在 Create 存在时由 XBCENeoForgeClient / FMLClientSetupEvent 调用。
+ * 铜动力学方块的客户端渲染
  */
 object XBCECopperClient {
 
@@ -75,7 +71,7 @@ object XBCECopperClient {
     }
 
     fun onClientSetup() {
-        // 关键：必须在模型烘焙前注册全部 PartialModel（否则懒加载会拿到 missing model → 紫黑）
+        // 注册全部 PartialModel
         for (stage in CopperStage.entries) {
             for (finish in CopperFinish.entries) {
                 val base = copperBaseName(stage, finish)
@@ -95,7 +91,7 @@ object XBCECopperClient {
                 .apply()
         )
 
-        // 支架模型包装（同 Create 原生 kinetic 方块）
+        // 支架模型包装
         for (holder in XBCECopperBlocks.blockHolders()) {
             val block = holder.get()
             CreateClient.MODEL_SWAPPER.customBlockModels.register(BuiltInRegistries.BLOCK.getKey(block)) { baked ->
@@ -103,7 +99,7 @@ object XBCECopperClient {
             }
         }
 
-        // 铜机壳：注册到 Create 的机壳连接纹理（同氧化度的机壳相邻时接缝消失，视觉上连成整体）
+        // 铜机壳
         for (holder in XBCECopperBlocks.casingHolders()) {
             val block = holder.get()
             val stage = (block as? CopperOxidizableBlock)?.stage ?: CopperStage.COPPER

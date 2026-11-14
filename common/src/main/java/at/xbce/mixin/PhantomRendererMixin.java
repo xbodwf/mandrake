@@ -2,6 +2,7 @@ package at.xbce.mixin;
 
 import at.xbce.client.render.PhantomFireworkLayer;
 import at.xbce.client.render.PhantomHelmetLayer;
+import at.xbce.client.render.PhantomSpearLayer;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.PhantomModel;
 import net.minecraft.client.model.geom.ModelLayers;
@@ -15,8 +16,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * 给幻翼渲染器挂自定义头盔层：
- * 偷来的头盔会真实地戴在幻翼头上（含材质、染色、附魔光泽），杀掉它即可取回。
+ * Extra phantom render layers: stolen helmet, firework payload and carried spear.
  */
 @Mixin(PhantomRenderer.class)
 public abstract class PhantomRendererMixin {
@@ -31,5 +31,7 @@ public abstract class PhantomRendererMixin {
             ));
         ((LivingEntityLayersAccessor<Phantom, PhantomModel<Phantom>>) this).xbce$getLayers()
             .add(new PhantomFireworkLayer(self));
+        ((LivingEntityLayersAccessor<Phantom, PhantomModel<Phantom>>) this).xbce$getLayers()
+            .add(new PhantomSpearLayer(self));
     }
 }

@@ -1,17 +1,18 @@
 {
-  "type": "minecraft:crafting_shapeless",
+  "type": "minecraft:crafting_shaped",
   "category": "redstone",
-  "ingredients": [
-    {
-      "item": "create:shaft"
-    },
-    {
+  "pattern": [
+    "C",
+    "C"
+  ],
+  "key": {
+    "C": {
       "item": "minecraft:copper_ingot"
     }
-  ],
+  },
   "result": {
     "id": "xbce:copper_shaft",
-    "count": 1
+    "count": 8
   },
   "neoforge:conditions": [
     {

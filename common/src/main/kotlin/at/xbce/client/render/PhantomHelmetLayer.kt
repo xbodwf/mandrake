@@ -46,7 +46,8 @@ class PhantomHelmetLayer(
         val body = this.parentModel.root().getChild("body")
         poseStack.pushPose()
         body.translateAndRotate(poseStack)
-        poseStack.translate(0.0f, -0.425f, -0.20f)
+        // Model space uses +Y for down: positive Y hangs the helmet below the body.
+        poseStack.translate(0.0f, 0.30f, -0.20f)
         poseStack.scale(0.75f, 0.75f, 0.75f)
 
         helmetModel.setAllVisible(false)

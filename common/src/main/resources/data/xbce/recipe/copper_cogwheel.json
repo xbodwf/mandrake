@@ -3,10 +3,10 @@
   "category": "redstone",
   "ingredients": [
     {
-      "item": "create:cogwheel"
+      "item": "xbce:copper_shaft"
     },
     {
-      "item": "minecraft:copper_ingot"
+      "tag": "minecraft:planks"
     }
   ],
   "result": {

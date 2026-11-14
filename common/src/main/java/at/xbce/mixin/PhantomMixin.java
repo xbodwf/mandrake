@@ -7,6 +7,7 @@ import java.util.UUID;
 
 import at.xbce.entity.PhantomBoostControl;
 import at.xbce.entity.PhantomExtra;
+import at.xbce.entity.SpearCompat;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -15,18 +16,25 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.SpawnGroupData;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.entity.monster.Phantom;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.phys.Vec3;
 
 import org.spongepowered.asm.mixin.Mixin;
@@ -34,6 +42,7 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
  * 幻翼整活合集（直接增强原版幻翼）：
@@ -57,6 +66,8 @@ public abstract class PhantomMixin implements PhantomExtra {
     @Unique private static final double XBCE_WAKE_RADIUS_SQR = 12.25D; // 3.5^2
     @Unique private static final int XBCE_PLAY_DEAD_TIMEOUT = 500;
     @Unique private static final int XBCE_BOOST_COOLDOWN = 25;
+    @Unique private static final float XBCE_SPEAR_CHANCE = 0.04F;
+    @Unique private static final int XBCE_SPEAR_COOLDOWN = 50;
     /** 烟花加速期间的速度上限（格/tick），约等于鞘翅 + 火箭连发的巡航速度。 */
     @Unique private static final float XBCE_BOOST_SPEED = 2.4F;
     /** 追击模式速度：略高于玩家烟花连发，保证能咬上。 */
@@ -106,6 +117,7 @@ public abstract class PhantomMixin implements PhantomExtra {
 
     @Unique private int xbce$bomberTimer = 1200;
     @Unique private boolean xbce$bombedOnce = false;
+    @Unique private int xbce$spearCooldown = 0;
 
     private Mob xbce$mob() {
         return (Mob) (Object) this;
@@ -137,6 +149,55 @@ public abstract class PhantomMixin implements PhantomExtra {
         xbce$tickGrab(server);
         xbce$tickFireworkBoost(server);
         xbce$tickBomber(server);
+        xbce$tickSpear(server);
+    }
+
+    // ------------------------------------------------------------------ spear
+
+    @Inject(method = "finalizeSpawn", at = @At("TAIL"))
+    private void xbce$rollSpear(
+        ServerLevelAccessor level, DifficultyInstance difficulty, MobSpawnType spawnType,
+        SpawnGroupData spawnGroupData, CallbackInfoReturnable<SpawnGroupData> cir
+    ) {
+        Mob self = xbce$mob();
+        if (self.level().isClientSide()) return;
+        if (self.getRandom().nextFloat() >= XBCE_SPEAR_CHANCE) return;
+        Item spear = SpearCompat.randomSpear(self.getRandom());
+        if (spear != null) {
+            self.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(spear));
+        }
+    }
+
+    /** Thrusts a carried spear at a nearby target, with a short cooldown. */
+    @Unique
+    private void xbce$tickSpear(ServerLevel level) {
+        Mob self = xbce$mob();
+        if (xbce$spearCooldown > 0) {
+            xbce$spearCooldown--;
+            return;
+        }
+
+        ItemStack held = self.getItemBySlot(EquipmentSlot.MAINHAND);
+        if (!SpearCompat.isSpear(held)) return;
+
+        LivingEntity target = self.getTarget();
+        if (target == null || !target.isAlive()) return;
+        if (target instanceof net.minecraft.world.entity.player.Player player
+            && (player.isCreative() || player.isSpectator())) return;
+        if (self.distanceToSqr(target) > 36.0D) return;
+        if (!self.hasLineOfSight(target)) return;
+
+        Vec3 to = target.position().add(0.0D, target.getBbHeight() * 0.5D, 0.0D).subtract(self.position());
+        if (to.lengthSqr() < 1.0E-4D) return;
+        if (self.getViewVector(1.0F).dot(to.normalize()) < 0.6D) return;
+
+        float damage = (float) self.getAttributeValue(Attributes.ATTACK_DAMAGE) + SpearCompat.bonusDamage(held);
+        target.hurt(level.damageSources().mobAttack(self), damage);
+        level.playSound(null, self.getX(), self.getY(), self.getZ(),
+            SoundEvents.TRIDENT_HIT, SoundSource.HOSTILE, 1.0F, 0.8F);
+        level.sendParticles(ParticleTypes.CRIT,
+            target.getX(), target.getEyeY(), target.getZ(), 8, 0.3D, 0.3D, 0.3D, 0.1D);
+        xbce$spearCooldown = XBCE_SPEAR_COOLDOWN;
     }
 
     // ------------------------------------------------------------- play dead
